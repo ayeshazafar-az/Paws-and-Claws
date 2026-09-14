@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/admin_login_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/details/presentation/details_screen.dart';
 import '../features/donation/presentation/donation_screen.dart';
@@ -41,6 +42,10 @@ class AppRouter {
     routes: [
       GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/admin_login',
+        builder: (context, state) => const AdminLoginScreen(),
+      ),
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),

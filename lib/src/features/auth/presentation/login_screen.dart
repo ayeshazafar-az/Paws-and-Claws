@@ -152,6 +152,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),
+                    const SizedBox(height: 32),
+                    TextButton.icon(
+                      onPressed: () => context.push('/admin_login'),
+                      icon: const Icon(
+                        Icons.security,
+                        color: Colors.white24,
+                        size: 16,
+                      ),
+                      label: const Text(
+                        'Staff Portal (Restricted)',
+                        style: TextStyle(color: Colors.white24),
+                      ),
+                    ),
                   ],
                 ),
               ),
