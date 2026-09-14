@@ -263,27 +263,31 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                                 : Colors.grey[100],
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(
-                              'Urgent Rescue Case',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: _isUrgent
-                                    ? Colors.redAccent
-                                    : Colors.black87,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                'Urgent Rescue Case',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _isUrgent
+                                      ? Colors.redAccent
+                                      : Colors.black87,
+                                ),
                               ),
-                            ),
-                            subtitle: Text(
-                              'Highlights them in red on the dashboard.',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 13,
+                              subtitle: Text(
+                                'Highlights them in red on the dashboard.',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 13,
+                                ),
                               ),
+                              activeColor: Colors.redAccent,
+                              value: _isUrgent,
+                              onChanged: (val) =>
+                                  setState(() => _isUrgent = val),
                             ),
-                            activeColor: Colors.redAccent,
-                            value: _isUrgent,
-                            onChanged: (val) => setState(() => _isUrgent = val),
                           ),
                         ),
                       ],
