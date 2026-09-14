@@ -74,85 +74,165 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Apply for ${widget.animal.name}',
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: theme.primaryColor,
+        elevation: 0,
+        centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Adoption Questionnaire',
-                style: theme.textTheme.displayMedium,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Please answer honestly. This helps us ensure ${widget.animal.name} goes to the perfect home.',
-                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-              ),
-              const SizedBox(height: 32),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 32.0,
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CircleAvatar(
+                    radius: 48,
+                    backgroundColor: theme.colorScheme.secondary.withOpacity(
+                      0.2,
+                    ),
+                    child: Icon(
+                      Icons.favorite,
+                      size: 48,
+                      color: theme.colorScheme.secondary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Adoption Questionnaire',
+                    style: theme.textTheme.displayMedium?.copyWith(
+                      color: theme.primaryColor,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Please answer honestly. This helps us ensure ${widget.animal.name} goes to the perfect forever home.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[700],
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 48),
 
-              _buildFieldLabel(
-                'Why do you want to adopt ${widget.animal.name}?',
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _reasonController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'I would love to adopt because...',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) => val == null || val.isEmpty
-                    ? 'This field is required'
-                    : null,
-              ),
-              const SizedBox(height: 24),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildFieldLabel(
+                          'Why do you want to adopt ${widget.animal.name}?',
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _reasonController,
+                          maxLines: 4,
+                          decoration: _inputDecoration(
+                            'I would love to adopt because...',
+                            Icons.chat_bubble_outline,
+                          ),
+                          validator: (val) => val == null || val.isEmpty
+                              ? 'This field is required'
+                              : null,
+                        ),
+                        const SizedBox(height: 32),
 
-              _buildFieldLabel('Describe your experience with pets.'),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _experienceController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'I grew up with dogs and cats...',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) => val == null || val.isEmpty
-                    ? 'This field is required'
-                    : null,
-              ),
-              const SizedBox(height: 24),
+                        _buildFieldLabel('Describe your experience with pets.'),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _experienceController,
+                          maxLines: 3,
+                          decoration: _inputDecoration(
+                            'I grew up with dogs and cats...',
+                            Icons.history,
+                          ),
+                          validator: (val) => val == null || val.isEmpty
+                              ? 'This field is required'
+                              : null,
+                        ),
+                        const SizedBox(height: 32),
 
-              SwitchListTile(
-                title: const Text('Do you currently have other pets?'),
-                activeColor: theme.colorScheme.secondary,
-                value: _hasOtherPets,
-                onChanged: (val) => setState(() => _hasOtherPets = val),
-              ),
-              const SizedBox(height: 48),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text(
+                              'Do you currently have other pets?',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            activeColor: theme.colorScheme.secondary,
+                            value: _hasOtherPets,
+                            onChanged: (val) =>
+                                setState(() => _hasOtherPets = val),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 48),
 
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                ),
-                onPressed: _isSubmitting ? null : _submitApplication,
-                child: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Submit Application',
-                        style: TextStyle(fontSize: 18),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
                       ),
+                      elevation: 8,
+                      shadowColor: theme.colorScheme.secondary.withOpacity(0.5),
+                    ),
+                    onPressed: _isSubmitting ? null : _submitApplication,
+                    icon: _isSubmitting
+                        ? const SizedBox.shrink()
+                        : const Icon(Icons.check_circle, size: 20),
+                    label: _isSubmitting
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Submit Application',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -162,7 +242,33 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
   Widget _buildFieldLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      style: const TextStyle(
+        fontWeight: FontWeight.w700,
+        fontSize: 16,
+        color: Colors.black87,
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint, IconData icon) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: Padding(
+        padding: const EdgeInsets.only(
+          bottom: 50.0,
+        ), // Align icon to top in multiline
+        child: Icon(icon, color: Colors.grey[400]),
+      ),
+      filled: true,
+      fillColor: Colors.grey[100],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+      ),
     );
   }
 }

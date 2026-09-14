@@ -79,122 +79,232 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(
           'List a Rescue',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: theme.primaryColor,
+        elevation: 0,
+        centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Help them find a home',
-                style: theme.textTheme.displayMedium,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Enter the details of the animal you are listing for adoption.',
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 32),
-
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
-
-              DropdownButtonFormField<String>(
-                value: _selectedSpecies,
-                decoration: const InputDecoration(
-                  labelText: 'Species',
-                  border: OutlineInputBorder(),
-                ),
-                items: ['Dog', 'Cat', 'Bird', 'Other'].map((species) {
-                  return DropdownMenuItem(value: species, child: Text(species));
-                }).toList(),
-                onChanged: (val) => setState(() => _selectedSpecies = val!),
-              ),
-              const SizedBox(height: 16),
-
-              Row(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 32.0,
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: TextFormField(
-                      controller: _breedController,
-                      decoration: const InputDecoration(
-                        labelText: 'Breed',
-                        border: OutlineInputBorder(),
-                      ),
+                  Text(
+                    'Help them find a home 🐾',
+                    style: theme.textTheme.displayMedium?.copyWith(
+                      color: theme.primaryColor,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Fill out the card below to post a new rescue directly to the dashboard.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[700],
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildInputField(
+                          controller: _nameController,
+                          label: 'Animal Name',
+                          icon: Icons.pets,
+                          validator: (val) =>
+                              val == null || val.isEmpty ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 24),
+
+                        DropdownButtonFormField<String>(
+                          value: _selectedSpecies,
+                          decoration: _inputDecoration(
+                            'Species',
+                            Icons.category,
+                          ),
+                          items: ['Dog', 'Cat', 'Bird', 'Other'].map((species) {
+                            return DropdownMenuItem(
+                              value: species,
+                              child: Text(species),
+                            );
+                          }).toList(),
+                          onChanged: (val) =>
+                              setState(() => _selectedSpecies = val!),
+                        ),
+                        const SizedBox(height: 24),
+
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: _buildInputField(
+                                controller: _breedController,
+                                label: 'Breed',
+                                icon: Icons.merge_type,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 2,
+                              child: _buildInputField(
+                                controller: _ageController,
+                                label: 'Age (mo)',
+                                icon: Icons.calendar_today,
+                                isNumber: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        _buildInputField(
+                          controller: _descController,
+                          label: 'Description & Personality',
+                          icon: Icons.description,
+                          maxLines: 4,
+                          validator: (val) =>
+                              val == null || val.isEmpty ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 32),
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _isUrgent
+                                ? Colors.redAccent.withOpacity(0.1)
+                                : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              'Urgent Rescue Case',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _isUrgent
+                                    ? Colors.redAccent
+                                    : Colors.black87,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Highlights them in red on the dashboard.',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 13,
+                              ),
+                            ),
+                            activeColor: Colors.redAccent,
+                            value: _isUrgent,
+                            onChanged: (val) => setState(() => _isUrgent = val),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _ageController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Age (months)',
-                        border: OutlineInputBorder(),
+
+                  const SizedBox(height: 48),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
                       ),
+                      elevation: 8,
+                      shadowColor: theme.colorScheme.secondary.withOpacity(0.5),
                     ),
+                    onPressed: _isPosting ? null : _postAnimal,
+                    icon: _isPosting
+                        ? const SizedBox.shrink()
+                        : const Icon(Icons.send, size: 20),
+                    label: _isPosting
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Post Animal',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
+                  const SizedBox(height: 32),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _descController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
-
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  'Is this an urgent medical/rescue case?',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text(
-                  'Highlights them in red on the dashboard.',
-                ),
-                activeColor: Colors.redAccent,
-                value: _isUrgent,
-                onChanged: (val) => setState(() => _isUrgent = val),
-              ),
-
-              const SizedBox(height: 48),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                ),
-                onPressed: _isPosting ? null : _postAnimal,
-                child: _isPosting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Post Animal', style: TextStyle(fontSize: 18)),
-              ),
-            ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    int maxLines = 1,
+    bool isNumber = false,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      decoration: _inputDecoration(label, icon),
+      validator: validator,
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(
+        color: Colors.grey[600],
+        fontWeight: FontWeight.w600,
+      ),
+      prefixIcon: Icon(icon, color: Colors.grey[400]),
+      filled: true,
+      fillColor: Colors.grey[100],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
       ),
     );
   }
