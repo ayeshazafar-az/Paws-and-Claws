@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/animal_provider.dart';
 import '../widgets/animal_card.dart';
 import '../../../core/supabase_setup.dart'; // To get current user details
+import '../../auth/providers/role_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,9 @@ class HomeScreen extends ConsumerWidget {
     final urgentAsync = ref.watch(urgentAnimalsProvider);
     final allAsync = ref.watch(allAnimalsProvider);
     final selectedSpecies = ref.watch(selectedSpeciesProvider);
+
+    // Silently triggers the future to upgrade current test user to admin
+    ref.watch(ensureAdminPrivilegesProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -51,19 +55,68 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       Row(
                         children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: theme.primaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.add_circle,
-                                color: theme.primaryColor,
-                              ),
-                              tooltip: 'Post a Rescue',
-                              onPressed: () => context.push('/add_animal'),
-                            ),
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final role = ref.watch(userRoleProvider);
+                              if (role == 'adopter')
+                                return const SizedBox.shrink(); // Hide from standard users
+
+                              return Row(
+                                children: [
+                                  if (role == 'admin')
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.blueGrey[900]
+                                            ?.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      margin: const EdgeInsets.only(right: 12),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.admin_panel_settings,
+                                          color: Colors.blueGrey,
+                                        ),
+                                        tooltip: 'Admin Portal',
+                                        onPressed: () => context.push('/admin'),
+                                      ),
+                                    ),
+                                  if (role == 'volunteer')
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.teal.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      margin: const EdgeInsets.only(right: 12),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.assignment,
+                                          color: Colors.teal,
+                                        ),
+                                        tooltip: 'Shelter Portal',
+                                        onPressed: () =>
+                                            context.push('/volunteer'),
+                                      ),
+                                    ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: theme.primaryColor.withOpacity(
+                                        0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: IconButton(
+                                      icon: Icon(
+                                        Icons.add_circle,
+                                        color: theme.primaryColor,
+                                      ),
+                                      tooltip: 'Post a Rescue',
+                                      onPressed: () =>
+                                          context.push('/add_animal'),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                           const SizedBox(width: 16),
                           GestureDetector(

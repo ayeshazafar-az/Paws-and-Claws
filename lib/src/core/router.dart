@@ -10,6 +10,8 @@ import '../features/donation/presentation/donation_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/home/presentation/add_animal_screen.dart';
 import '../features/details/presentation/application_screen.dart';
+import '../features/admin/presentation/admin_dashboard_screen.dart';
+import '../features/volunteer/presentation/volunteer_dashboard_screen.dart';
 import 'models/animal.dart';
 
 class AppRouter {
@@ -68,6 +70,14 @@ class AppRouter {
           final animal = state.extra as Animal;
           return ApplicationScreen(animal: animal);
         },
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/volunteer',
+        builder: (context, state) => const VolunteerDashboardScreen(),
       ),
     ],
   );
