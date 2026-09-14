@@ -20,9 +20,6 @@ class HomeScreen extends ConsumerWidget {
     final allAsync = ref.watch(allAnimalsProvider);
     final selectedSpecies = ref.watch(selectedSpeciesProvider);
 
-    // Silently triggers the future to upgrade current test user to admin
-    ref.watch(ensureAdminPrivilegesProvider);
-
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
