@@ -49,15 +49,37 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          context.push('/profile');
-                        },
-                        child: CircleAvatar(
-                          backgroundColor: theme.colorScheme.secondary,
-                          radius: 24,
-                          child: const Icon(Icons.person, color: Colors.white),
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: theme.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.add_circle,
+                                color: theme.primaryColor,
+                              ),
+                              tooltip: 'Post a Rescue',
+                              onPressed: () => context.push('/add_animal'),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () {
+                              context.push('/profile');
+                            },
+                            child: CircleAvatar(
+                              backgroundColor: theme.colorScheme.secondary,
+                              radius: 24,
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
