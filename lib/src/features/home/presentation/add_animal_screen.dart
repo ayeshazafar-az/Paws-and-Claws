@@ -20,8 +20,44 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
   final _descController = TextEditingController();
 
   String _selectedSpecies = 'Dog';
+  String _selectedBreed = 'Unknown';
   bool _isUrgent = false;
   bool _isPosting = false;
+
+  final Map<String, List<String>> _breeds = {
+    'Dog': [
+      'Unknown',
+      'Mixed Breed',
+      'Golden Retriever',
+      'German Shepherd',
+      'Labrador',
+      'Bulldog',
+      'Poodle',
+      'Husky',
+      'Other',
+    ],
+    'Cat': [
+      'Unknown',
+      'Mixed Breed',
+      'Persian',
+      'Siamese',
+      'Maine Coon',
+      'Ragdoll',
+      'Bengal',
+      'Sphynx',
+      'Other',
+    ],
+    'Bird': [
+      'Unknown',
+      'Parrot',
+      'Cockatiel',
+      'Canary',
+      'Finch',
+      'Lovebird',
+      'Other',
+    ],
+    'Other': ['Unknown', 'Other'],
+  };
 
   void _postAnimal() async {
     if (_formKey.currentState!.validate()) {
@@ -36,9 +72,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
         await SupabaseSetup.client.from('animals').insert({
           'name': _nameController.text.trim(),
           'species': _selectedSpecies,
-          'breed': _breedController.text.trim().isNotEmpty
-              ? _breedController.text.trim()
-              : null,
+          'breed': _selectedBreed == 'Unknown' ? null : _selectedBreed,
           'age_months': age,
           'description': _descController.text.trim(),
           'image_url': imageUrl,
@@ -159,8 +193,13 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                               child: Text(species),
                             );
                           }).toList(),
-                          onChanged: (val) =>
-                              setState(() => _selectedSpecies = val!),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedSpecies = val!;
+                              _selectedBreed =
+                                  'Unknown'; // Reset breed safely when species changes
+                            });
+                          },
                         ),
                         const SizedBox(height: 24),
 
@@ -169,10 +208,24 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                           children: [
                             Expanded(
                               flex: 3,
-                              child: _buildInputField(
-                                controller: _breedController,
-                                label: 'Breed',
-                                icon: Icons.merge_type,
+                              child: DropdownButtonFormField<String>(
+                                value: _selectedBreed,
+                                decoration: _inputDecoration(
+                                  'Breed',
+                                  Icons.merge_type,
+                                ),
+                                isExpanded: true,
+                                items: _breeds[_selectedSpecies]!.map((breed) {
+                                  return DropdownMenuItem(
+                                    value: breed,
+                                    child: Text(
+                                      breed,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (val) =>
+                                    setState(() => _selectedBreed = val!),
                               ),
                             ),
                             const SizedBox(width: 16),

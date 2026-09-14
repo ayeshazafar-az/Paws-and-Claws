@@ -175,6 +175,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  bool _obscurePassword = true;
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
@@ -184,13 +186,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }) {
     return TextField(
       controller: controller,
-      obscureText: isPassword,
+      obscureText: isPassword ? _obscurePassword : false,
       keyboardType: keyboardType,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white54),
         prefixIcon: Icon(icon, color: Colors.white70),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.white70,
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              )
+            : null,
         filled: true,
         fillColor: Colors.white12,
         border: OutlineInputBorder(

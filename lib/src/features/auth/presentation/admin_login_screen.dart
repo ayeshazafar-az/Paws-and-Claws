@@ -93,6 +93,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     }
   }
 
+  bool _obscurePassword = true;
+  bool _obscureSecret = true;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,18 +164,31 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                   ),
                   child: TextField(
                     controller: _secretKeyController,
-                    obscureText: true,
+                    obscureText: _obscureSecret,
                     style: const TextStyle(
                       color: Colors.tealAccent,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2,
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'SECRET VAULT KEY',
-                      labelStyle: TextStyle(color: Colors.tealAccent),
-                      prefixIcon: Icon(Icons.key, color: Colors.tealAccent),
+                      labelStyle: const TextStyle(color: Colors.tealAccent),
+                      prefixIcon: const Icon(
+                        Icons.key,
+                        color: Colors.tealAccent,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureSecret
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.tealAccent,
+                        ),
+                        onPressed: () =>
+                            setState(() => _obscureSecret = !_obscureSecret),
+                      ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 20,
                       ),
@@ -214,16 +230,26 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     TextEditingController controller,
     String label,
     IconData icon,
-    bool obscure,
+    bool isPassword,
   ) {
     return TextField(
       controller: controller,
-      obscureText: obscure,
+      obscureText: isPassword ? _obscurePassword : false,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.blueGrey[300]),
         prefixIcon: Icon(icon, color: Colors.blueGrey[300]),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.blueGrey[300],
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              )
+            : null,
         filled: true,
         fillColor: Colors.blueGrey[800],
         border: OutlineInputBorder(
