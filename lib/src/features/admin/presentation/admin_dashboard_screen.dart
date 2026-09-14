@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase_setup.dart';
 
@@ -48,6 +49,21 @@ class AdminDashboardScreen extends ConsumerWidget {
         ),
         backgroundColor: Colors.blueGrey[900], // Distinctive Admin color
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home, color: Colors.white),
+            tooltip: 'Go to Home',
+            onPressed: () => context.go('/'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: 'Sign Out Admin',
+            onPressed: () async {
+              await SupabaseSetup.client.auth.signOut();
+              if (context.mounted) context.go('/login');
+            },
+          ),
+        ],
       ),
       body: statsAsync.when(
         data: (stats) {
