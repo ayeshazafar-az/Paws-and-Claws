@@ -32,6 +32,9 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
           'user_id': user.id,
           'animal_id': widget.animal.id,
           'status': 'pending',
+          'reason': _reasonController.text.trim(),
+          'experience': _experienceController.text.trim(),
+          'has_other_pets': _hasOtherPets,
         });
 
         if (mounted) {

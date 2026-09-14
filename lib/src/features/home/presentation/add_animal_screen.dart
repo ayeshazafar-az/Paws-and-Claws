@@ -15,7 +15,6 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
-  final _breedController = TextEditingController();
   final _ageController = TextEditingController();
   final _descController = TextEditingController();
 

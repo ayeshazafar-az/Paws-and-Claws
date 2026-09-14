@@ -1,10 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase_setup.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'auth_provider.dart';
 
-// Provides the current user's role securely derived from Auth metadata
+// Provides the current user's role securely and reacts to auth state changes
 final userRoleProvider = Provider<String>((ref) {
   // Watch auth provider to ensure the role updates when users switch accounts!
   final authState = ref.watch(authStateProvider);
