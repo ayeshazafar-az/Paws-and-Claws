@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/supabase_setup.dart';
 
 class DonationScreen extends StatefulWidget {
   const DonationScreen({super.key});
@@ -15,29 +16,51 @@ class _DonationScreenState extends State<DonationScreen> {
 
   void _processPayment() async {
     setState(() => _isProcessing = true);
-    // Simulate gateway delay
-    await Future.delayed(const Duration(seconds: 2));
 
-    if (mounted) {
-      setState(() => _isProcessing = false);
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Thank You! ♥️'),
-          content: Text(
-            'Your generous donate of \$${_selectedAmount.toInt()} has been successfully processed!',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // close dialog
-                Navigator.of(context).pop(); // go back
-              },
-              child: const Text('Return'),
+    try {
+      final user = SupabaseSetup.client.auth.currentUser;
+      if (user != null) {
+        // Record the donation in the database to make it fully functional
+        await SupabaseSetup.client.from('donations').insert({
+          'user_id': user.id,
+          'amount': _selectedAmount,
+          'type': _isMonthly ? 'monthly' : 'one-time',
+        });
+      } else {
+        throw Exception("You must be logged in to successfully donate.");
+      }
+
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Thank You! ♥️'),
+            content: Text(
+              'Your generous donation of \$${_selectedAmount.toInt()} has been successfully processed!',
             ),
-          ],
-        ),
-      );
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // close dialog
+                  Navigator.of(context).pop(); // go back
+                },
+                child: const Text('Return'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 

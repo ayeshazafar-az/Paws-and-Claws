@@ -1,0 +1,5 @@
+# Design Decisions & Future Improvements
+
+For the Paws & Claws application, we selected a premium "Forest Green" and "Warm Terracotta" color palette paired with the Google Fonts 'Nunito' and 'Inter'. This establishes an organic, trustworthy, yet modern tone appropriate for an animal welfare charity. We opted for a declarative feature-first architecture using Riverpod for reliable global state management, and GoRouter to securely redirect unauthenticated users away from core features. To ensure cross-platform responsiveness, the Home feed utilizes adaptive slivers that scale from a 2-column mobile layout to a 4-column tablet layout. The inclusion of subtle Hero animations and sticky "Adoption" call-to-actions keeps user engagement high without overwhelming the hierarchy. 
+
+If given more time, the next primary improvement would be replacing the simulated local donation gateway with a real Stripe integration, and adding an in-app messaging feature so applicants can communicate directly with shelter volunteers.
