@@ -51,10 +51,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          // Navigate to profile in the future.
-                          // For now just sign out.
-                          SupabaseSetup.client.auth.signOut();
-                          context.go('/login');
+                          context.push('/profile');
                         },
                         child: CircleAvatar(
                           backgroundColor: theme.colorScheme.secondary,
@@ -100,7 +97,10 @@ class HomeScreen extends ConsumerWidget {
                                 child: AnimalCard(
                                   animal: urgentAnimals[index],
                                   onTap: () {
-                                    // Navigate to details
+                                    context.push(
+                                      '/details',
+                                      extra: urgentAnimals[index],
+                                    );
                                   },
                                 ),
                               );
@@ -137,9 +137,9 @@ class HomeScreen extends ConsumerWidget {
                               if (selected) {
                                 ref
                                     .read(selectedSpeciesProvider.notifier)
-                                    .state = species == 'All'
-                                    ? null
-                                    : species;
+                                    .setSpecies(
+                                      species == 'All' ? null : species,
+                                    );
                               }
                             },
                             selectedColor: theme.colorScheme.secondary,
@@ -199,7 +199,7 @@ class HomeScreen extends ConsumerWidget {
                             return AnimalCard(
                               animal: animals[index],
                               onTap: () {
-                                // Nav to details placeholder
+                                context.push('/details', extra: animals[index]);
                               },
                             );
                           }, childCount: animals.length),

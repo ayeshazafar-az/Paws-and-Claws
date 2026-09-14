@@ -5,9 +5,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/home/presentation/home_screen.dart';
-// import '../features/details/presentation/details_screen.dart';
-// import '../features/donation/presentation/donation_screen.dart';
-// import '../features/profile/presentation/profile_screen.dart';
+import '../features/details/presentation/details_screen.dart';
+import '../features/donation/presentation/donation_screen.dart';
+import '../features/profile/presentation/profile_screen.dart';
+import 'models/animal.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -23,12 +24,10 @@ class AppRouter {
       final isOnboardingRoute = state.matchedLocation == '/onboarding';
 
       if (!isAuth) {
-        // Unauthenticated users are sent to onboarding by default
         if (isOnboardingRoute || isLoginRoute) return null;
         return '/onboarding';
       }
 
-      // If authenticated and trying to access auth screens, redirect to home
       if (isLoginRoute || isOnboardingRoute) {
         return '/';
       }
@@ -41,6 +40,21 @@ class AppRouter {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/details',
+        builder: (context, state) {
+          final animal = state.extra as Animal;
+          return DetailsScreen(animal: animal);
+        },
+      ),
+      GoRoute(
+        path: '/donate',
+        builder: (context, state) => const DonationScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
     ],
   );

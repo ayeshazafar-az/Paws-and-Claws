@@ -2,7 +2,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/animal.dart';
 import '../../../core/supabase_setup.dart';
 
-final selectedSpeciesProvider = StateProvider<String?>((ref) => null);
+class SelectedSpeciesNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void setSpecies(String? species) => state = species;
+}
+
+final selectedSpeciesProvider =
+    NotifierProvider<SelectedSpeciesNotifier, String?>(
+      () => SelectedSpeciesNotifier(),
+    );
 
 final urgentAnimalsProvider = FutureProvider<List<Animal>>((ref) async {
   final response = await SupabaseSetup.client
