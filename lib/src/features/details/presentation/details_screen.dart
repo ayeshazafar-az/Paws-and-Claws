@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/models/animal.dart';
 import '../../../core/supabase_setup.dart';
+import '../../profile/presentation/profile_screen.dart'; // For applicationsProvider
 
 // Very simple favorites mock state for now
 class FavoritesNotifier extends Notifier<Set<String>> {
@@ -194,6 +195,9 @@ class DetailsScreen extends ConsumerWidget {
                         'user_id': user.id,
                         'animal_id': animal.id,
                       });
+
+                      ref.invalidate(applicationsProvider);
+
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
