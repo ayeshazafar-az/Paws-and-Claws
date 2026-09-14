@@ -3,8 +3,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/models/animal.dart';
-import '../../../core/supabase_setup.dart';
-import '../../profile/presentation/profile_screen.dart'; // For applicationsProvider
 
 // Very simple favorites mock state for now
 class FavoritesNotifier extends Notifier<Set<String>> {
@@ -187,40 +185,8 @@ class DetailsScreen extends ConsumerWidget {
             const SizedBox(width: 24),
             Expanded(
               child: ElevatedButton(
-                onPressed: () async {
-                  try {
-                    final user = SupabaseSetup.client.auth.currentUser;
-                    if (user != null) {
-                      await SupabaseSetup.client.from('applications').insert({
-                        'user_id': user.id,
-                        'animal_id': animal.id,
-                      });
-
-                      ref.invalidate(applicationsProvider);
-
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Application successfully submitted! We will contact you soon.',
-                            ),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      }
-                    } else {
-                      throw 'You must be logged in to apply.';
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: $e'),
-                          backgroundColor: Colors.redAccent,
-                        ),
-                      );
-                    }
-                  }
+                onPressed: () {
+                  context.push('/apply', extra: animal);
                 },
                 child: const Text('Apply to Adopt'),
               ),
