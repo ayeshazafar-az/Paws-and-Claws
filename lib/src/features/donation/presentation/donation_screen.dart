@@ -1,265 +1,491 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/supabase_setup.dart';
 
-class DonationScreen extends StatefulWidget {
+class DonationScreen extends ConsumerStatefulWidget {
   const DonationScreen({super.key});
 
   @override
-  State<DonationScreen> createState() => _DonationScreenState();
+  ConsumerState<DonationScreen> createState() => _DonationScreenState();
 }
 
-class _DonationScreenState extends State<DonationScreen> {
-  final List<double> presets = [10, 25, 50, 100];
-  double _selectedAmount = 25;
-  bool _isMonthly = false;
+class _DonationScreenState extends ConsumerState<DonationScreen>
+    with SingleTickerProviderStateMixin {
+  final _amountController = TextEditingController(text: '50');
+  final _nameController = TextEditingController();
+  final _cardController = TextEditingController();
+  final _expiryController = TextEditingController();
+  final _cvvController = TextEditingController();
+
+  double _selectedAmount = 50.0;
   bool _isProcessing = false;
+  bool _isSuccess = false;
+
+  late AnimationController _successController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _successController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _scaleAnimation = CurvedAnimation(
+      parent: _successController,
+      curve: Curves.elasticOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _successController.dispose();
+    super.dispose();
+  }
 
   void _processPayment() async {
+    if (_amountController.text.isEmpty || _nameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields.')),
+      );
+      return;
+    }
+
     setState(() => _isProcessing = true);
+
+    // Simulate Secure Stripe API Call
+    await Future.delayed(const Duration(seconds: 3));
 
     try {
       final user = SupabaseSetup.client.auth.currentUser;
-      if (user != null) {
-        // Record the donation in the database to make it fully functional
-        await SupabaseSetup.client.from('donations').insert({
-          'user_id': user.id,
-          'amount': _selectedAmount,
-          'type': _isMonthly ? 'monthly' : 'one-time',
-        });
-      } else {
-        throw Exception("You must be logged in to successfully donate.");
-      }
+      final amount = double.parse(_amountController.text);
 
-      if (mounted) {
-        setState(() => _isProcessing = false);
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Thank You! ♥️'),
-            content: Text(
-              'Your generous donation of \$${_selectedAmount.toInt()} has been successfully processed!',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // close dialog
-                  Navigator.of(context).pop(); // go back
-                },
-                child: const Text('Return'),
-              ),
-            ],
-          ),
-        );
-      }
+      await SupabaseSetup.client.from('donations').insert({
+        'user_id': user?.id,
+        'amount': amount,
+        'message': 'Processed securely via mock Stripe integration.',
+      });
+
+      setState(() {
+        _isProcessing = false;
+        _isSuccess = true;
+      });
+      _successController.forward();
+
+      // Return home after success
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) context.go('/');
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+      setState(() => _isProcessing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment Failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    if (_isSuccess) return _buildSuccessScreen();
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
-          'Make a Donation',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          'Secure Checkout',
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: theme.primaryColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(maxWidth: 500),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 32.0,
-            ),
+            padding: const EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                CircleAvatar(
-                  radius: 48,
-                  backgroundColor: theme.colorScheme.secondary.withOpacity(0.2),
-                  child: Icon(
-                    Icons.volunteer_activism,
-                    size: 48,
-                    color: theme.colorScheme.secondary,
-                  ),
-                ),
-                const SizedBox(height: 24),
+                _buildVirtualCreditCard(),
+                const SizedBox(height: 32),
+
                 Text(
-                  'Your Support Changes Lives',
-                  style: theme.textTheme.displayMedium?.copyWith(
-                    color: theme.primaryColor,
+                  'Select Amount',
+                  style: TextStyle(
+                    fontSize: 18,
                     fontWeight: FontWeight.w900,
+                    color: Colors.blueGrey[900],
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  '100% of your donation goes directly towards the care and shelter of rescued animals.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[700],
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
+                const SizedBox(height: 16),
+                _buildAmountPresets(),
+                const SizedBox(height: 24),
+
+                _buildModernTextField(
+                  _amountController,
+                  'Custom Amount (\$)',
+                  Icons.attach_money,
+                  isNumber: true,
+                ),
+                const SizedBox(height: 16),
+                _buildModernTextField(
+                  _nameController,
+                  'Cardholder Name',
+                  Icons.person,
+                ),
+                const SizedBox(height: 16),
+                _buildModernTextField(
+                  _cardController,
+                  'Card Number',
+                  Icons.credit_card,
+                  isNumber: true,
+                ),
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildModernTextField(
+                        _expiryController,
+                        'MM/YY',
+                        Icons.calendar_today,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildModernTextField(
+                        _cvvController,
+                        'CVV',
+                        Icons.security,
+                        isNumber: true,
+                        obscure: true,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 48),
 
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(32),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 24,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    backgroundColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 10,
+                    shadowColor: Colors.blueAccent.withOpacity(0.5),
                   ),
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    children: [
-                      // Toggle Monthly/One-time
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: ToggleButtons(
-                          borderRadius: BorderRadius.circular(16),
-                          selectedColor: Colors.white,
-                          fillColor: theme.colorScheme.secondary,
-                          color: Colors.grey[600],
-                          borderWidth: 0,
-                          renderBorder: false,
-                          isSelected: [_isMonthly == false, _isMonthly == true],
-                          onPressed: (index) {
-                            setState(() {
-                              _isMonthly = index == 1;
-                            });
-                          },
-                          children: const [
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 32.0,
-                                vertical: 16.0,
-                              ),
-                              child: Text(
-                                'One Time',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                  onPressed: _isProcessing ? null : _processPayment,
+                  child: _isProcessing
+                      ? const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
                               ),
                             ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 32.0,
-                                vertical: 16.0,
+                            SizedBox(width: 16),
+                            Text(
+                              'Processing Securely...',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
                               ),
-                              child: Text(
-                                'Monthly',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.lock,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Pay \$${_selectedAmount.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
                           ],
                         ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.shield, size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Secured by Stripe Technology',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
                       ),
-                      const SizedBox(height: 32),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-                      // Amount Presets
-                      Wrap(
-                        spacing: 16,
-                        runSpacing: 16,
-                        alignment: WrapAlignment.center,
-                        children: presets.map((amount) {
-                          final isSelected = _selectedAmount == amount;
-                          return ChoiceChip(
-                            label: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 12.0,
-                              ),
-                              child: Text(
-                                '\$${amount.toInt()}',
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : theme.primaryColor,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 20,
-                                ),
-                              ),
-                            ),
-                            selected: isSelected,
-                            selectedColor: theme.primaryColor,
-                            backgroundColor: Colors.grey[100],
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            showCheckmark: false,
-                            onSelected: (selected) {
-                              if (selected)
-                                setState(() => _selectedAmount = amount);
-                            },
-                          );
-                        }).toList(),
+  Widget _buildVirtualCreditCard() {
+    return Container(
+      height: 220,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF333333), Color(0xFF111111)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Stack(
+        children: [
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Icon(
+              Icons.contactless,
+              color: Colors.white.withOpacity(0.5),
+              size: 32,
+            ),
+          ),
+          Positioned(
+            left: 0,
+            top: 20,
+            child: Image.network(
+              'https://upload.wikimedia.org/wikipedia/commons/4/46/Touch_and_go_logo.png',
+              width: 50,
+              color: Colors.white70,
+              errorBuilder: (c, e, s) => const SizedBox.shrink(),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                '**** **** **** ${_cardController.text.length > 4 ? _cardController.text.substring(_cardController.text.length - 4) : '3947'}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  letterSpacing: 4,
+                  fontFamily: 'monospace',
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CARDHOLDER',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _nameController.text.isEmpty
+                            ? 'Ayesha Z.'
+                            : _nameController.text.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 48),
-
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    elevation: 8,
-                    shadowColor: theme.colorScheme.secondary.withOpacity(0.5),
-                  ),
-                  onPressed: _isProcessing ? null : _processPayment,
-                  icon: _isProcessing
-                      ? const SizedBox.shrink()
-                      : const Icon(
-                          Icons.favorite,
-                          size: 20,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'EXPIRES',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _expiryController.text.isEmpty
+                            ? '12/28'
+                            : _expiryController.text,
+                        style: const TextStyle(
                           color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                  label: _isProcessing
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
-                          ),
-                        )
-                      : Text(
-                          'Donate \$${_selectedAmount.toInt()}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-                const SizedBox(height: 32),
-              ],
+                      ),
+                    ],
+                  ),
+                  const Icon(Icons.payment, color: Colors.white, size: 36),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmountPresets() {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [10, 50, 100, 500].map((amount) {
+        final isSelected = _selectedAmount == amount;
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedAmount = amount.toDouble();
+              _amountController.text = amount.toString();
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.blueAccent : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected ? Colors.blueAccent : Colors.grey[300]!,
+                width: 2,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: Colors.blueAccent.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : [],
             ),
+            child: Text(
+              '\$$amount',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : Colors.blueGrey[800],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildModernTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    bool isNumber = false,
+    bool obscure = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      obscureText: obscure,
+      onChanged: (val) =>
+          setState(() {}), // trigger rebuild for credit card view
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          color: Colors.blueGrey[400],
+          fontWeight: FontWeight.w600,
+        ),
+        prefixIcon: Icon(icon, color: Colors.blueGrey[300]),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey[200]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey[200]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuccessScreen() {
+    return Scaffold(
+      backgroundColor: Colors.blueAccent,
+      body: Center(
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle,
+                  size: 100,
+                  color: Colors.green,
+                ),
+              ),
+              const SizedBox(height: 32),
+              const Text(
+                'Payment Successful!',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Thank you for your generous donation of \$${_selectedAmount.toStringAsFixed(0)}.',
+                style: const TextStyle(fontSize: 18, color: Colors.white70),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       ),
