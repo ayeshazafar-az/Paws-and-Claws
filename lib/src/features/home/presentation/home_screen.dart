@@ -20,7 +20,23 @@ class HomeScreen extends ConsumerWidget {
     final allAsync = ref.watch(allAnimalsProvider);
     final selectedSpecies = ref.watch(selectedSpeciesProvider);
 
+    final role = ref.watch(userRoleProvider);
+
     return Scaffold(
+      floatingActionButton: (role == 'adopter' || role == 'guest')
+          ? FloatingActionButton.extended(
+              onPressed: () => context.push('/chat'),
+              icon: const Icon(Icons.chat, color: Colors.white),
+              backgroundColor: theme.colorScheme.secondary,
+              label: const Text(
+                'Live Support',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {

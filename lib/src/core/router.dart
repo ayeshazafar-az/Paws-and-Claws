@@ -12,7 +12,9 @@ import '../features/profile/presentation/profile_screen.dart';
 import '../features/home/presentation/add_animal_screen.dart';
 import '../features/details/presentation/application_screen.dart';
 import '../features/admin/presentation/admin_dashboard_screen.dart';
+import '../features/admin/presentation/manage_volunteers_screen.dart';
 import '../features/volunteer/presentation/volunteer_dashboard_screen.dart';
+import '../features/chat/presentation/chat_room_screen.dart';
 import 'models/animal.dart';
 
 class AppRouter {
@@ -46,6 +48,14 @@ class AppRouter {
       GoRoute(
         path: '/admin_login',
         builder: (context, state) => const AdminLoginScreen(),
+      ),
+      GoRoute(
+        path: '/manage_volunteers',
+        builder: (context, state) => const ManageVolunteersScreen(),
+      ),
+      GoRoute(
+        path: '/chat',
+        builder: (context, state) => const ChatRoomScreen(),
       ),
       GoRoute(
         path: '/onboarding',

@@ -153,13 +153,13 @@ class AdminDashboardScreen extends ConsumerWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blueGrey[900],
                             ),
-                            onPressed: () {},
+                            onPressed: () => context.push('/manage_volunteers'),
                             icon: const Icon(
                               Icons.manage_accounts,
                               color: Colors.white,
                             ),
                             label: const Text(
-                              'Manage Volunteers (Coming Soon)',
+                              'Access Control & Volunteers',
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
