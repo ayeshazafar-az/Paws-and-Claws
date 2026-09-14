@@ -27,13 +27,14 @@ class AppRouter {
 
       final isLoginRoute = state.matchedLocation == '/login';
       final isOnboardingRoute = state.matchedLocation == '/onboarding';
+      final isAdminLoginRoute = state.matchedLocation == '/admin_login';
 
       if (!isAuth) {
-        if (isOnboardingRoute || isLoginRoute) return null;
+        if (isOnboardingRoute || isLoginRoute || isAdminLoginRoute) return null;
         return '/onboarding';
       }
 
-      if (isLoginRoute || isOnboardingRoute) {
+      if (isLoginRoute || isOnboardingRoute || isAdminLoginRoute) {
         return '/';
       }
 

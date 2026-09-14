@@ -36,17 +36,38 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Verify Secret Vault Key
+      // 1. Verify all credentials against .env file
       final environmentSecret = dotenv.env['ADMIN_SECRET_KEY'];
+      final envAdminEmail = dotenv.env['ADMIN_EMAIL'];
+      final envAdminPass = dotenv.env['ADMIN_PASSWORD'];
+
       if (environmentSecret == null || secretKey != environmentSecret) {
         throw Exception('INVALID SECRET VAULT KEY. Access Denied.');
       }
 
-      // 2. Authenticate
-      final res = await SupabaseSetup.client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      if (envAdminEmail != null && email != envAdminEmail) {
+        throw Exception('UNAUTHORIZED EMAIL FOR ADMIN ACCESS.');
+      }
+      if (envAdminPass != null && password != envAdminPass) {
+        throw Exception('UNAUTHORIZED ADMIN PASSWORD.');
+      }
+
+      // 2. Authenticate or Auto-Register
+      AuthResponse? res;
+      try {
+        // Try logging in normally
+        res = await SupabaseSetup.client.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
+      } catch (e) {
+        // If login fails (user doesn't exist), secretly sign them up!
+        res = await SupabaseSetup.client.auth.signUp(
+          email: email,
+          password: password,
+          data: {'full_name': 'Super Admin'},
+        );
+      }
 
       if (res.user != null) {
         // 3. Grant Admin Privileges in metadata securely
