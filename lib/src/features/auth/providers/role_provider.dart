@@ -1,12 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase_setup.dart';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'auth_provider.dart';
 
 // Provides the current user's role securely derived from Auth metadata
 final userRoleProvider = Provider<String>((ref) {
-  final user = SupabaseSetup.client.auth.currentUser;
+  // Watch auth provider to ensure the role updates when users switch accounts!
+  final authState = ref.watch(authStateProvider);
+  final user = authState.value?.session?.user;
+
   if (user == null) return 'adopter'; // default unsigned/guest
 
   // Extract role from metadata, defaulting to adopter if empty
