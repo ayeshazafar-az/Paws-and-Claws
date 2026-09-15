@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/supabase_setup.dart';
 
+import 'volunteer_inbox_screen.dart';
+
 final pendingApplicationsProvider = FutureProvider<List<dynamic>>((ref) async {
   final res = await SupabaseSetup.client
       .from('applications')
@@ -25,8 +27,21 @@ class VolunteerDashboardScreen extends ConsumerWidget {
           'Shelter Management',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.teal[700], // Distinctive Volunteer color
+        backgroundColor: Colors.teal[700],
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.inbox, color: Colors.white),
+            tooltip: 'Live Support Inbox',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const VolunteerInboxScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 16),
+        ],
       ),
       body: appsAsync.when(
         data: (apps) {

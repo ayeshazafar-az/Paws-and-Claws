@@ -15,6 +15,7 @@ import '../features/admin/presentation/admin_dashboard_screen.dart';
 import '../features/admin/presentation/manage_volunteers_screen.dart';
 import '../features/volunteer/presentation/volunteer_dashboard_screen.dart';
 import '../features/chat/presentation/chat_room_screen.dart';
+import '../features/ai/presentation/ai_matchmaker_screen.dart';
 import 'models/animal.dart';
 
 class AppRouter {
@@ -56,6 +57,10 @@ class AppRouter {
       GoRoute(
         path: '/chat',
         builder: (context, state) => const ChatRoomScreen(),
+      ),
+      GoRoute(
+        path: '/ai_matchmaker',
+        builder: (context, state) => const AIPetMatchmakerScreen(),
       ),
       GoRoute(
         path: '/onboarding',

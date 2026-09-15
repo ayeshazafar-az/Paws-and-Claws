@@ -1,105 +1,113 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../../../core/supabase_setup.dart';
 
-class ChatRoomScreen extends StatefulWidget {
-  const ChatRoomScreen({super.key});
+class ChatRoomScreen extends ConsumerStatefulWidget {
+  final String? targetUserId;
+  final String? targetUserName;
+
+  const ChatRoomScreen({super.key, this.targetUserId, this.targetUserName});
 
   @override
-  State<ChatRoomScreen> createState() => _ChatRoomScreenState();
+  ConsumerState<ChatRoomScreen> createState() => _ChatRoomScreenState();
 }
 
-class _ChatRoomScreenState extends State<ChatRoomScreen> {
+class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   final _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'text':
-          'Hi there! 👋 Welcome to Paws & Claws Shelter Support. How can we help you regarding your adoption journey today?',
-      'isMe': false,
-      'time': 'Just now',
-    },
-  ];
 
-  bool _isTyping = false;
+  late final Stream<List<Map<String, dynamic>>> _messagesStream;
+  String get _currentUserId => SupabaseSetup.client.auth.currentUser?.id ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Stream ALL messages, we filter client-side to easily handle the OR logic for 1-to-1 routing
+    _messagesStream = SupabaseSetup.client
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: true);
+  }
 
   void _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
 
-    final userText = _messageController.text.trim();
-    setState(() {
-      _messages.add({'text': userText, 'isMe': true, 'time': 'Now'});
-      _messageController.clear();
-      _isTyping = true;
-    });
+    _messageController.clear();
 
-    _scrollToBottom();
+    // If targetUserId is set, it means a Volunteer is explicitly replying to an Adopter.
+    // If null, it means an Adopter is sending a message to the general Shelter.
+    final receiverId = widget.targetUserId;
 
-    // Mock bot logic for shelter auto-responses
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    String botReply =
-        'Thank you for reaching out! A volunteer will review your message and reply soon.';
-    if (userText.toLowerCase().contains('adopt')) {
-      botReply =
-          'Adoption applications usually take 24-48 hours to process. Make sure you check the "Pending" status in your profile!';
-    } else if (userText.toLowerCase().contains('donate') ||
-        userText.toLowerCase().contains('fee')) {
-      botReply =
-          'All adoption fees cover vaccinations, microchipping, and vet checkups. Every cent goes back to helping animals in need!';
-    }
-
-    if (mounted) {
-      setState(() {
-        _isTyping = false;
-        _messages.add({'text': botReply, 'isMe': false, 'time': 'Now'});
+    try {
+      await SupabaseSetup.client.from('messages').insert({
+        'sender_id': _currentUserId,
+        'receiver_id': receiverId,
+        'content': text,
       });
       _scrollToBottom();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to send message: $e',
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+    if (_scrollController.hasClients) {
+      Future.delayed(const Duration(milliseconds: 100), () {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
-      }
-    });
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isVolunteerMode = widget.targetUserId != null;
+    final title = isVolunteerMode
+        ? 'Chat: ${widget.targetUserName}'
+        : 'Shelter Support';
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Row(
           children: [
-            const CircleAvatar(
-              backgroundImage: NetworkImage(
-                'https://images.unsplash.com/photo-1574158622682-e40e69881006',
-              ),
+            CircleAvatar(
+              backgroundColor: theme.primaryColor,
+              child: const Icon(Icons.person, color: Colors.white),
             ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Shelter Support',
-                  style: TextStyle(
+                Text(
+                  title,
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                     color: Colors.blueGrey,
                   ),
                 ),
-                Text(
-                  _isTyping ? 'Typing...' : 'Online',
+                const Text(
+                  'Live Network',
                   style: TextStyle(
                     fontSize: 12,
-                    color: _isTyping ? theme.primaryColor : Colors.green,
+                    color: Colors.green,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -114,13 +122,62 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                return _buildChatBubble(msg['text'], msg['isMe'], msg['time']);
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _messagesStream,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final allMessages = snapshot.data!;
+
+                // 1-to-1 Routing Logic:
+                // If I am Adopter: show messages where I am sender OR I am receiver.
+                // If I am Volunteer (targetUserId provided): show messages where target is sender OR target is receiver.
+                final filterId = isVolunteerMode
+                    ? widget.targetUserId!
+                    : _currentUserId;
+
+                final filteredMessages = allMessages.where((m) {
+                  return m['sender_id'] == filterId ||
+                      m['receiver_id'] == filterId;
+                }).toList();
+
+                if (filteredMessages.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No messages yet. Say hello!',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    ),
+                  );
+                }
+
+                // Auto-scroll when new messages arrive
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _scrollToBottom(),
+                );
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredMessages.length,
+                  itemBuilder: (context, index) {
+                    final msg = filteredMessages[index];
+                    final isMe = msg['sender_id'] == _currentUserId;
+
+                    // Format timestamp
+                    final createdAt = DateTime.parse(
+                      msg['created_at'],
+                    ).toLocal();
+                    final timeString = DateFormat('h:mm a').format(createdAt);
+
+                    return _buildChatBubble(
+                      msg['content'] ?? '',
+                      isMe,
+                      timeString,
+                    );
+                  },
+                );
               },
             ),
           ),

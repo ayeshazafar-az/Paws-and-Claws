@@ -130,6 +130,20 @@ class HomeScreen extends ConsumerWidget {
                               );
                             },
                           ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.deepPurpleAccent.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.auto_awesome,
+                                color: Colors.deepPurpleAccent,
+                              ),
+                              tooltip: 'Gemini AI Matchmaker',
+                              onPressed: () => context.push('/ai_matchmaker'),
+                            ),
+                          ),
                           const SizedBox(width: 16),
                           GestureDetector(
                             onTap: () {
