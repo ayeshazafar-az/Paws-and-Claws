@@ -63,7 +63,7 @@ Respond directly to the user in a warm, enthusiastic, and empathetic tone.
 Clearly state the name of the animal you are recommending and explain exactly why they are a perfect fit based on the user's description. Keep it concise (1-2 short paragraphs).
 """;
 
-      final model = GenerativeModel(model: 'gemini-3.6-flash', apiKey: apiKey);
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
       final content = [Content.text(prompt)];
       final response = await model.generateContent(content);
 
