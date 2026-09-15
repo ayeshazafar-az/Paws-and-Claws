@@ -17,11 +17,16 @@ class AuthNotifier {
     await _client.auth.signInWithPassword(email: email, password: password);
   }
 
-  Future<void> signUp(String email, String password, String fullName) async {
+  Future<void> signUp(
+    String email,
+    String password,
+    String fullName, {
+    String role = 'adopter',
+  }) async {
     await _client.auth.signUp(
       email: email,
       password: password,
-      data: {'full_name': fullName},
+      data: {'full_name': fullName, 'role': role},
     );
   }
 

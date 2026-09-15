@@ -17,6 +17,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   bool _isSignUp = false;
   bool _isLoading = false;
+  String _selectedRole = 'adopter';
 
   void _submit() async {
     setState(() => _isLoading = true);
@@ -32,6 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _emailController.text.trim(),
           _passwordController.text.trim(),
           _nameController.text.trim(),
+          role: _selectedRole,
         );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -112,6 +114,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         controller: _nameController,
                         hint: 'Full Name',
                         icon: Icons.person_outline,
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white12,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedRole,
+                            dropdownColor: Colors.blueGrey[900],
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                            icon: const Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.white70,
+                            ),
+                            isExpanded: true,
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'adopter',
+                                child: Text('I want to adopt a pet (Buyer)'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'seller',
+                                child: Text(
+                                  'I want to list/sell a pet (Seller)',
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'volunteer',
+                                child: Text(
+                                  'I want to manage the shelter (Volunteer)',
+                                ),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              if (val != null)
+                                setState(() => _selectedRole = val);
+                            },
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 16),
                     ],

@@ -110,21 +110,22 @@ class HomeScreen extends ConsumerWidget {
                                             context.push('/volunteer'),
                                       ),
                                     ),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: IconButton(
-                                      icon: Icon(
-                                        Icons.add_circle,
-                                        color: theme.primaryColor,
+                                  if (role == 'seller' || role == 'admin')
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
-                                      tooltip: 'Post a Rescue',
-                                      onPressed: () =>
-                                          context.push('/add_animal'),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.add_circle,
+                                          color: Colors.green,
+                                        ),
+                                        tooltip: 'Post Pet / Sell',
+                                        onPressed: () =>
+                                            context.push('/add_animal'),
+                                      ),
                                     ),
-                                  ),
                                 ],
                               );
                             },
