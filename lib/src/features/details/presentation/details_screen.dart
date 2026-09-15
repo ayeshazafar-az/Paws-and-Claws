@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/models/animal.dart';
+import '../../auth/providers/role_provider.dart';
 
 // Very simple favorites mock state for now
 class FavoritesNotifier extends Notifier<Set<String>> {
@@ -31,6 +32,7 @@ class DetailsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isFavorite = ref.watch(favoritesProvider).contains(animal.id);
+    final role = ref.watch(userRoleProvider);
     final imageUrl =
         animal.imageUrl ??
         'https://images.unsplash.com/photo-1543466835-00a7907e9de1';
@@ -160,40 +162,42 @@ class DetailsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Adoption Fee', style: theme.textTheme.bodyMedium),
-                Text('\$150', style: theme.textTheme.titleLarge),
-              ],
-            ),
-            const SizedBox(width: 24),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  context.push('/apply', extra: animal);
-                },
-                child: const Text('Apply to Adopt'),
+      bottomSheet: (role == 'seller' || role == 'admin')
+          ? const SizedBox.shrink()
+          : Container(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Adoption Fee', style: theme.textTheme.bodyMedium),
+                      Text('\$150', style: theme.textTheme.titleLarge),
+                    ],
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.push('/apply', extra: animal);
+                      },
+                      child: const Text('Apply to Adopt'),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
