@@ -183,7 +183,10 @@ class DetailsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Adoption Fee', style: theme.textTheme.bodyMedium),
-                      Text('\$150', style: theme.textTheme.titleLarge),
+                      Text(
+                        '\$${animal.adoptionFee}',
+                        style: theme.textTheme.titleLarge,
+                      ),
                     ],
                   ),
                   const SizedBox(width: 24),

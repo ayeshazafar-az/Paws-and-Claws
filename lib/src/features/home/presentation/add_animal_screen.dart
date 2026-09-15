@@ -19,6 +19,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
 
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
+  final _feeController = TextEditingController(text: '150');
   final _descController = TextEditingController();
 
   String _selectedSpecies = 'Dog';
@@ -136,6 +137,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
           'image_url': finalImageUrl,
           'is_urgent': _isUrgent,
           'adoption_status': 'available',
+          'adoption_fee': int.tryParse(_feeController.text) ?? 150,
           if (user != null) 'seller_id': user.id,
         });
 
@@ -337,13 +339,23 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                                     setState(() => _selectedBreed = val!),
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 12),
                             Expanded(
                               flex: 2,
                               child: _buildInputField(
                                 controller: _ageController,
-                                label: 'Age (mo)',
+                                label: 'Age (m)',
                                 icon: Icons.calendar_today,
+                                isNumber: true,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: _buildInputField(
+                                controller: _feeController,
+                                label: 'Fee (\$)',
+                                icon: Icons.attach_money,
                                 isNumber: true,
                               ),
                             ),
