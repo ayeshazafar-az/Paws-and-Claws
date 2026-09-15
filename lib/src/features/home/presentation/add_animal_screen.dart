@@ -1,6 +1,8 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/supabase_setup.dart';
 import '../providers/animal_provider.dart';
 
@@ -22,6 +24,10 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
   String _selectedBreed = 'Unknown';
   bool _isUrgent = false;
   bool _isPosting = false;
+
+  Uint8List? _imageBytes;
+  String? _imageFileName;
+  final ImagePicker _picker = ImagePicker();
 
   final Map<String, List<String>> _breeds = {
     'Dog': [
@@ -58,31 +64,80 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
     'Other': ['Unknown', 'Other'],
   };
 
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _imageBytes = bytes;
+          _imageFileName = image.name;
+        });
+      }
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+    }
+  }
+
   void _postAnimal() async {
+    if (_imageBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an image of the pet first!'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       setState(() => _isPosting = true);
 
       try {
         final age = int.tryParse(_ageController.text) ?? 5;
-        // Construct a dynamic unsplash image based on species
-        final imageUrl =
-            'https://source.unsplash.com/800x800/?${_selectedSpecies.toLowerCase()}';
-
         final user = SupabaseSetup.client.auth.currentUser;
 
+        // 1. Upload Image to Supabase Storage
+        final extension = _imageFileName?.split('.').last ?? 'jpg';
+        final uniquePath =
+            '\${DateTime.now().millisecondsSinceEpoch}_user_\${user?.id.substring(0,5)}.$extension';
+
+        await SupabaseSetup.client.storage
+            .from('pets')
+            .uploadBinary(
+              uniquePath,
+              _imageBytes!,
+              fileOptions: FileOptions(
+                contentType: 'image/$extension',
+                upsert: true,
+              ),
+            );
+
+        // 2. Get Public URL
+        final String finalImageUrl = SupabaseSetup.client.storage
+            .from('pets')
+            .getPublicUrl(uniquePath);
+
+        // 3. Insert into Database
         await SupabaseSetup.client.from('animals').insert({
           'name': _nameController.text.trim(),
           'species': _selectedSpecies,
           'breed': _selectedBreed == 'Unknown' ? null : _selectedBreed,
           'age_months': age,
           'description': _descController.text.trim(),
-          'image_url': imageUrl,
+          'image_url': finalImageUrl,
           'is_urgent': _isUrgent,
           'adoption_status': 'available',
           if (user != null) 'seller_id': user.id,
         });
 
-        // Refresh the feed
+        // 4. Refresh the feed
         ref.invalidate(allAnimalsProvider);
         ref.invalidate(urgentAnimalsProvider);
 
@@ -94,7 +149,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          context.pop(); // Go back to feed
+          context.pop();
         }
       } catch (e) {
         if (mounted) {
@@ -149,7 +204,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Fill out the card below to post a new rescue directly to the dashboard.',
+                    'Upload a photo and fill out the details below to publish directly to the global feed.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.grey[700],
                       height: 1.5,
@@ -158,17 +213,70 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                   ),
                   const SizedBox(height: 40),
 
+                  // Image Uploader
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: theme.primaryColor.withOpacity(0.3),
+                          width: 2,
+                          style: BorderStyle.solid,
+                        ),
+                        image: _imageBytes != null
+                            ? DecorationImage(
+                                image: MemoryImage(_imageBytes!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: _imageBytes == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.add_a_photo,
+                                  size: 48,
+                                  color: theme.primaryColor.withOpacity(0.6),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Tap to Upload Photo',
+                                  style: TextStyle(
+                                    color: theme.primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Align(
+                              alignment: Alignment.topRight,
+                              child: Container(
+                                margin: const EdgeInsets.all(12),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: _pickImage,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 24,
-                          offset: const Offset(0, 12),
-                        ),
-                      ],
                     ),
                     padding: const EdgeInsets.all(32),
                     child: Column(
@@ -182,7 +290,6 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                               val == null || val.isEmpty ? 'Required' : null,
                         ),
                         const SizedBox(height: 24),
-
                         DropdownButtonFormField<String>(
                           value: _selectedSpecies,
                           decoration: _inputDecoration(
@@ -198,13 +305,11 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                           onChanged: (val) {
                             setState(() {
                               _selectedSpecies = val!;
-                              _selectedBreed =
-                                  'Unknown'; // Reset breed safely when species changes
+                              _selectedBreed = 'Unknown';
                             });
                           },
                         ),
                         const SizedBox(height: 24),
-
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -243,7 +348,6 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                           ],
                         ),
                         const SizedBox(height: 24),
-
                         _buildInputField(
                           controller: _descController,
                           label: 'Description & Personality',
@@ -253,7 +357,6 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                               val == null || val.isEmpty ? 'Required' : null,
                         ),
                         const SizedBox(height: 32),
-
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -265,31 +368,27 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                                 : Colors.grey[100],
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: SwitchListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(
-                                'Urgent Rescue Case',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: _isUrgent
-                                      ? Colors.redAccent
-                                      : Colors.black87,
-                                ),
+                          child: SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              'Urgent Rescue',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _isUrgent
+                                    ? Colors.redAccent
+                                    : Colors.black87,
                               ),
-                              subtitle: Text(
-                                'Highlights them in red on the dashboard.',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 13,
-                                ),
-                              ),
-                              activeColor: Colors.redAccent,
-                              value: _isUrgent,
-                              onChanged: (val) =>
-                                  setState(() => _isUrgent = val),
                             ),
+                            subtitle: Text(
+                              'Highlights them in red on the dashboard.',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 13,
+                              ),
+                            ),
+                            activeColor: Colors.redAccent,
+                            value: _isUrgent,
+                            onChanged: (val) => setState(() => _isUrgent = val),
                           ),
                         ),
                       ],
@@ -313,7 +412,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                     label: _isPosting
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
-                            'Post Animal',
+                            'Post Animal to Feed',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
