@@ -107,7 +107,11 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
         // 1. Upload Image to Supabase Storage
         final extension = _imageFileName?.split('.').last ?? 'jpg';
         final uniquePath =
-            '\${DateTime.now().millisecondsSinceEpoch}_user_\${user?.id.substring(0,5)}.$extension';
+            DateTime.now().millisecondsSinceEpoch.toString() +
+            '_user_' +
+            (user?.id.substring(0, 5) ?? 'guest') +
+            '.' +
+            extension;
 
         await SupabaseSetup.client.storage
             .from('pets')
