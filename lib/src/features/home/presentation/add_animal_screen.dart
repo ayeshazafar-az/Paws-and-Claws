@@ -68,6 +68,8 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
         final imageUrl =
             'https://source.unsplash.com/800x800/?${_selectedSpecies.toLowerCase()}';
 
+        final user = SupabaseSetup.client.auth.currentUser;
+
         await SupabaseSetup.client.from('animals').insert({
           'name': _nameController.text.trim(),
           'species': _selectedSpecies,
@@ -77,6 +79,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
           'image_url': imageUrl,
           'is_urgent': _isUrgent,
           'adoption_status': 'available',
+          if (user != null) 'seller_id': user.id,
         });
 
         // Refresh the feed
