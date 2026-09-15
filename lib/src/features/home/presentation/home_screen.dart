@@ -112,9 +112,7 @@ class HomeScreen extends ConsumerWidget {
                                     ),
                                   Container(
                                     decoration: BoxDecoration(
-                                      color: theme.primaryColor.withOpacity(
-                                        0.1,
-                                      ),
+                                      color: Colors.green.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: IconButton(
