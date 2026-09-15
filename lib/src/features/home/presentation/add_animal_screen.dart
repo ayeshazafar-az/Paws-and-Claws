@@ -118,10 +118,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
             .uploadBinary(
               uniquePath,
               _imageBytes!,
-              fileOptions: FileOptions(
-                contentType: 'image/$extension',
-                upsert: true,
-              ),
+              fileOptions: FileOptions(contentType: 'image/$extension'),
             );
 
         // 2. Get Public URL
