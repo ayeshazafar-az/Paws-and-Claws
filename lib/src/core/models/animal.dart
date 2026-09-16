@@ -9,6 +9,7 @@ class Animal {
   final bool isUrgent;
   final String adoptionStatus;
   final int adoptionFee;
+  final String? sellerId;
   final DateTime createdAt;
 
   Animal({
@@ -22,6 +23,7 @@ class Animal {
     this.isUrgent = false,
     this.adoptionStatus = 'available',
     this.adoptionFee = 150,
+    this.sellerId,
     required this.createdAt,
   });
 
@@ -37,6 +39,7 @@ class Animal {
       isUrgent: json['is_urgent'] as bool? ?? false,
       adoptionStatus: json['adoption_status'] as String? ?? 'available',
       adoptionFee: json['adoption_fee'] as int? ?? 150,
+      sellerId: json['seller_id'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -53,6 +56,7 @@ class Animal {
       'is_urgent': isUrgent,
       'adoption_status': adoptionStatus,
       'adoption_fee': adoptionFee,
+      'seller_id': sellerId,
       'created_at': createdAt.toIso8601String(),
     };
   }

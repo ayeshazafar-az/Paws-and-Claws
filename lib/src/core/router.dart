@@ -75,7 +75,10 @@ class AppRouter {
       ),
       GoRoute(
         path: '/donate',
-        builder: (context, state) => const DonationScreen(),
+        builder: (context, state) {
+          final animal = state.extra as Animal?;
+          return DonationScreen(animal: animal);
+        },
       ),
       GoRoute(
         path: '/profile',

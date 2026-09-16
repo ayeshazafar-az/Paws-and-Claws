@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/supabase_setup.dart';
 
+import '../../../core/models/animal.dart';
+
 class DonationScreen extends ConsumerStatefulWidget {
-  const DonationScreen({super.key});
+  final Animal? animal;
+  const DonationScreen({super.key, this.animal});
 
   @override
   ConsumerState<DonationScreen> createState() => _DonationScreenState();
@@ -18,7 +21,7 @@ class _DonationScreenState extends ConsumerState<DonationScreen>
   final _expiryController = TextEditingController();
   final _cvvController = TextEditingController();
 
-  double _selectedAmount = 50.0;
+  late double _selectedAmount;
   bool _isProcessing = false;
   bool _isSuccess = false;
 
@@ -28,6 +31,8 @@ class _DonationScreenState extends ConsumerState<DonationScreen>
   @override
   void initState() {
     super.initState();
+    _selectedAmount = widget.animal?.adoptionFee.toDouble() ?? 50.0;
+    _amountController.text = _selectedAmount.toStringAsFixed(0);
     _successController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -365,10 +370,17 @@ class _DonationScreenState extends ConsumerState<DonationScreen>
   }
 
   Widget _buildAmountPresets() {
+    final amounts = widget.animal != null
+        ? [widget.animal!.adoptionFee, 50, 100, 500]
+        : [10, 50, 100, 500];
+
+    // Remove duplicates if the fee is one of the presets, and take first 4 to fit UI nicely
+    final uniqueAmounts = amounts.toSet().toList().take(4).toList();
+
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children: [10, 50, 100, 500].map((amount) {
+      children: uniqueAmounts.map((amount) {
         final isSelected = _selectedAmount == amount;
         return GestureDetector(
           onTap: () {

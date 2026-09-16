@@ -189,13 +189,30 @@ class DetailsScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.primaryColor,
+                        side: BorderSide(color: theme.primaryColor, width: 2),
+                      ),
+                      onPressed: () {
+                        context.push('/chat', extra: animal.sellerId);
+                      },
+                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                      label: const Text(
+                        'Chat',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        context.push('/apply', extra: animal);
+                        context.push('/donate', extra: animal);
                       },
-                      child: const Text('Apply to Adopt'),
+                      child: const Text('Buy Now / Checkout'),
                     ),
                   ),
                 ],
