@@ -136,11 +136,17 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 final allMessages = snapshot.data!;
 
                 // 1-to-1 Routing Logic:
-                final filterId = isC2C ? widget.targetUserId! : _currentUserId;
-
                 final filteredMessages = allMessages.where((m) {
-                  return m['sender_id'] == filterId ||
-                      m['receiver_id'] == filterId;
+                  if (isC2C) {
+                    final target = widget.targetUserId!;
+                    return (m['sender_id'] == _currentUserId &&
+                            m['receiver_id'] == target) ||
+                        (m['sender_id'] == target &&
+                            m['receiver_id'] == _currentUserId);
+                  } else {
+                    return m['sender_id'] == _currentUserId ||
+                        m['receiver_id'] == _currentUserId;
+                  }
                 }).toList();
 
                 if (filteredMessages.isEmpty) {

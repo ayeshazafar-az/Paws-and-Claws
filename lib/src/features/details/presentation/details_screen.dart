@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/models/animal.dart';
 import '../../auth/providers/role_provider.dart';
+import '../../../core/supabase_setup.dart';
 
 // Very simple favorites mock state for now
 class FavoritesNotifier extends Notifier<Set<String>> {
@@ -33,6 +34,7 @@ class DetailsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final isFavorite = ref.watch(favoritesProvider).contains(animal.id);
     final role = ref.watch(userRoleProvider);
+    final user = SupabaseSetup.client.auth.currentUser;
     final imageUrl =
         animal.imageUrl ??
         'https://images.unsplash.com/photo-1543466835-00a7907e9de1';
@@ -162,7 +164,7 @@ class DetailsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      bottomSheet: (role == 'seller' || role == 'admin')
+      bottomSheet: (role == 'admin' || animal.sellerId == user?.id)
           ? const SizedBox.shrink()
           : Container(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
