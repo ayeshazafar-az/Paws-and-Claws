@@ -21,24 +21,29 @@ class _VolunteerInboxScreenState extends State<VolunteerInboxScreen> {
 
   Future<void> _fetchInbox() async {
     try {
-      // Fetch all messages globally to extract distinct sender IDs
-      // ignoring messages sent BY volunteers (where receiver is not null)
+      final currentId = SupabaseSetup.client.auth.currentUser?.id;
+      if (currentId == null) return;
+
+      // Fetch all messages where user is either sender or receiver
       final res = await SupabaseSetup.client
           .from('messages')
-          .select('sender_id, created_at')
+          .select('sender_id, receiver_id, created_at')
+          .or('sender_id.eq.$currentId,receiver_id.eq.$currentId')
           .order('created_at', ascending: false);
 
-      final currentId = SupabaseSetup.client.auth.currentUser?.id;
       final Set<String> uniqueIds = {};
       final List<Map<String, dynamic>> distinctConvos = [];
 
       for (final msg in res) {
         final sender = msg['sender_id'] as String;
-        // Only list Adopters who reached out (don't list ourselves!)
-        if (sender != currentId && !uniqueIds.contains(sender)) {
-          uniqueIds.add(sender);
+        final receiver = msg['receiver_id'] as String;
+
+        final otherId = sender == currentId ? receiver : sender;
+
+        if (!uniqueIds.contains(otherId)) {
+          uniqueIds.add(otherId);
           distinctConvos.add({
-            'adopter_id': sender,
+            'contact_id': otherId,
             'last_message_at': msg['created_at'],
           });
         }
@@ -69,15 +74,19 @@ class _VolunteerInboxScreenState extends State<VolunteerInboxScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(
-          'Support Inbox',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          'Messages',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.teal,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: theme.brightness == Brightness.dark
+            ? Colors.white
+            : Colors.black87,
+        centerTitle: true,
       ),
-      backgroundColor: Colors.grey[50],
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.teal))
           : _conversations.isEmpty
@@ -100,10 +109,16 @@ class _VolunteerInboxScreenState extends State<VolunteerInboxScreen> {
               separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final convo = _conversations[index];
-                final adopterId = convo['adopter_id'] as String;
-                final shortId = adopterId
-                    .substring(adopterId.length - 6)
-                    .toUpperCase();
+                final contactId = convo['contact_id'] as String;
+                final isLegacy =
+                    contactId == '00000000-0000-0000-0000-000000000000';
+
+                final shortId = isLegacy
+                    ? 'LEGACY'
+                    : contactId.substring(contactId.length - 6).toUpperCase();
+                final titleName = isLegacy
+                    ? 'Legacy Animal Support'
+                    : 'User #$shortId';
 
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(
@@ -111,36 +126,37 @@ class _VolunteerInboxScreenState extends State<VolunteerInboxScreen> {
                     vertical: 8,
                   ),
                   leading: CircleAvatar(
-                    backgroundColor: Colors.teal.withOpacity(0.1),
-                    child: Text(
-                      shortId.substring(0, 2),
-                      style: const TextStyle(
-                        color: Colors.teal,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    backgroundColor: theme.colorScheme.secondary.withOpacity(
+                      0.1,
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      color: theme.colorScheme.secondary,
                     ),
                   ),
                   title: Text(
-                    'Adopter #$shortId',
+                    titleName,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   subtitle: const Text(
-                    'Tap to view and reply to messages',
+                    'Tap to view conversation',
                     style: TextStyle(color: Colors.grey),
                   ),
                   trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                  tileColor: Colors.white,
+                  tileColor: theme.brightness == Brightness.dark
+                      ? Colors.grey[900]
+                      : Colors.white,
                   onTap: () {
                     // Bypass GoRouter to push complex parameters easily and maintain backstack perfectly
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => ChatRoomScreen(
-                          targetUserId: adopterId,
-                          targetUserName: 'Adopter #$shortId',
+                          targetUserId: isLegacy ? '' : contactId,
+                          targetUserName: titleName,
                         ),
                       ),
                     );

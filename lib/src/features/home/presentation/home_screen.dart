@@ -136,6 +136,21 @@ class HomeScreen extends ConsumerWidget {
                           ),
                           Container(
                             decoration: BoxDecoration(
+                              color: Colors.blueAccent.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            margin: const EdgeInsets.only(right: 12),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.inbox,
+                                color: Colors.blueAccent,
+                              ),
+                              tooltip: 'Messages Inbox',
+                              onPressed: () => context.push('/volunteer_inbox'),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
                               color: Colors.deepPurpleAccent.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
