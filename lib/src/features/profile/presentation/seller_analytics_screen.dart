@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
+import '../../../core/supabase_setup.dart';
 
 class SellerAnalyticsScreen extends ConsumerStatefulWidget {
   const SellerAnalyticsScreen({super.key});
@@ -12,11 +13,26 @@ class SellerAnalyticsScreen extends ConsumerStatefulWidget {
       _SellerAnalyticsScreenState();
 }
 
+final sellerListingsProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final user = SupabaseSetup.client.auth.currentUser;
+  if (user == null) return [];
+  final response = await SupabaseSetup.client
+      .from('animals')
+      .select('name, adoption_fee, created_at')
+      .eq('seller_id', user.id)
+      .order('created_at', ascending: false);
+  return List<Map<String, dynamic>>.from(response);
+});
+
 class _SellerAnalyticsScreenState extends ConsumerState<SellerAnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    final listingsAsync = ref.watch(sellerListingsProvider);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -30,172 +46,180 @@ class _SellerAnalyticsScreenState extends ConsumerState<SellerAnalyticsScreen> {
         foregroundColor: isDark ? Colors.white : Colors.black87,
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+      body: listingsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (listings) {
+          int activeCount = listings.length;
+          int portfolioValue = 0;
+          for (var item in listings) {
+            portfolioValue += (item['adoption_fee'] as int? ?? 0);
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: _buildStatCard(
-                    'Total Sales',
-                    '\$12,450',
-                    Icons.account_balance_wallet,
-                    Colors.green,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatCard(
-                    'Active Listings',
-                    '14',
-                    Icons.pets,
-                    Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'Q3 Revenue Stream',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              height: 300,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-                border: isDark ? Border.all(color: Colors.white10) : null,
-              ),
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30,
-                        getTitlesWidget: (value, meta) {
-                          const style = TextStyle(
-                            color: Colors.grey,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          );
-                          Widget text;
-                          switch (value.toInt()) {
-                            case 0:
-                              text = const Text('Jul', style: style);
-                              break;
-                            case 3:
-                              text = const Text('Aug', style: style);
-                              break;
-                            case 6:
-                              text = const Text('Sep', style: style);
-                              break;
-                            case 9:
-                              text = const Text('Oct', style: style);
-                              break;
-                            case 11:
-                              text = const Text('Nov', style: style);
-                              break;
-                            default:
-                              text = const Text('', style: style);
-                              break;
-                          }
-                          return SideTitleWidget(
-                            axisSide: meta.axisSide,
-                            child: text,
-                          );
-                        },
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        'Portfolio Value',
+                        '\$${portfolioValue}',
+                        Icons.account_balance_wallet,
+                        Colors.green,
                       ),
                     ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                        getTitlesWidget: (value, meta) => Text(
-                          '\$${value.toInt()}k',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: const [
-                        FlSpot(0, 3),
-                        FlSpot(2.6, 2),
-                        FlSpot(4.9, 5),
-                        FlSpot(6.8, 3.1),
-                        FlSpot(8, 4),
-                        FlSpot(9.5, 3),
-                        FlSpot(11, 7),
-                      ],
-                      isCurved: true,
-                      color: AppTheme.neonCyan,
-                      barWidth: 5,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: AppTheme.neonCyan.withOpacity(0.2),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        'Active Listings',
+                        '$activeCount',
+                        Icons.pets,
+                        Colors.orange,
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 32),
+                Text(
+                  'Q3 Revenue Stream',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  height: 300,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppTheme.darkSurface : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                    border: isDark ? Border.all(color: Colors.white10) : null,
+                  ),
+                  child: LineChart(
+                    LineChartData(
+                      gridData: const FlGridData(show: false),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 30,
+                            getTitlesWidget: (value, meta) {
+                              const style = TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              );
+                              Widget text;
+                              switch (value.toInt()) {
+                                case 0:
+                                  text = const Text('Jul', style: style);
+                                  break;
+                                case 3:
+                                  text = const Text('Aug', style: style);
+                                  break;
+                                case 6:
+                                  text = const Text('Sep', style: style);
+                                  break;
+                                case 9:
+                                  text = const Text('Oct', style: style);
+                                  break;
+                                case 11:
+                                  text = const Text('Nov', style: style);
+                                  break;
+                                default:
+                                  text = const Text('', style: style);
+                                  break;
+                              }
+                              return SideTitleWidget(
+                                axisSide: meta.axisSide,
+                                child: text,
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                            getTitlesWidget: (value, meta) => Text(
+                              '\$${value.toInt()}k',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: const [
+                            FlSpot(0, 3),
+                            FlSpot(2.6, 2),
+                            FlSpot(4.9, 5),
+                            FlSpot(6.8, 3.1),
+                            FlSpot(8, 4),
+                            FlSpot(9.5, 3),
+                            FlSpot(11, 7),
+                          ],
+                          isCurved: true,
+                          color: AppTheme.neonCyan,
+                          barWidth: 5,
+                          isStrokeCapRound: true,
+                          dotData: const FlDotData(show: false),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: AppTheme.neonCyan.withOpacity(0.2),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  'My Animal Portfolio',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...listings.take(5).map((listing) {
+                  final date = DateTime.parse(listing['created_at']);
+                  return _buildTransactionTile(
+                    context,
+                    'Listed ${listing['name']}',
+                    '\$${listing['adoption_fee']}',
+                    date,
+                  );
+                }).toList(),
+                if (listings.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('You have no active listings.'),
+                  ),
+              ],
             ),
-            const SizedBox(height: 32),
-            Text(
-              'Recent Transactions',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildTransactionTile(
-              context,
-              'Sold Golden Retriever',
-              '+\$250',
-              DateTime.now().subtract(const Duration(hours: 2)),
-            ),
-            _buildTransactionTile(
-              context,
-              'Sold Persian Cat',
-              '+\$180',
-              DateTime.now().subtract(const Duration(days: 1)),
-            ),
-            _buildTransactionTile(
-              context,
-              'Platform Seller Fee',
-              '-\$15',
-              DateTime.now().subtract(const Duration(days: 1)),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

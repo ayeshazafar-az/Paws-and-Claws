@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/supabase_setup.dart';
 import '../../../core/models/application.dart';
 import '../../../core/models/donation.dart';
+import '../../../core/providers/theme_provider.dart';
 
 final applicationsProvider = FutureProvider<List<Application>>((ref) async {
   final user = SupabaseSetup.client.auth.currentUser;
@@ -169,6 +170,38 @@ class ProfileScreen extends ConsumerWidget {
 
               // Section: Settings
               _buildSectionHeader(context, 'Settings', Icons.settings),
+              Consumer(
+                builder: (context, ref, child) {
+                  final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+                  return SwitchListTile(
+                    secondary: Icon(
+                      isDark ? Icons.dark_mode : Icons.light_mode,
+                      color: theme.primaryColor,
+                    ),
+                    title: const Text('Midnight Glass Dark Mode'),
+                    value: isDark,
+                    onChanged: (val) =>
+                        ref.read(themeProvider.notifier).toggleTheme(),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.notifications_active,
+                  color: theme.primaryColor,
+                ),
+                title: const Text('Push Notifications'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Notifications are managed in System Settings',
+                      ),
+                    ),
+                  );
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text(
