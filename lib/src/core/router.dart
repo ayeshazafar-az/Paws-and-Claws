@@ -14,6 +14,8 @@ import '../features/details/presentation/application_screen.dart';
 import '../features/admin/presentation/admin_dashboard_screen.dart';
 import '../features/admin/presentation/manage_volunteers_screen.dart';
 import '../features/volunteer/presentation/volunteer_dashboard_screen.dart';
+import '../features/volunteer/presentation/volunteer_inbox_screen.dart';
+import '../features/profile/presentation/seller_analytics_screen.dart';
 import '../features/chat/presentation/chat_room_screen.dart';
 import '../features/ai/presentation/ai_matchmaker_screen.dart';
 import 'models/animal.dart';
@@ -98,6 +100,14 @@ class AppRouter {
       GoRoute(
         path: '/admin',
         builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/volunteer_inbox',
+        builder: (context, state) => const VolunteerInboxScreen(),
+      ),
+      GoRoute(
+        path: '/analytics',
+        builder: (context, state) => const SellerAnalyticsScreen(),
       ),
       GoRoute(
         path: '/volunteer',

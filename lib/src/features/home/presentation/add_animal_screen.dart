@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../core/supabase_setup.dart';
 import '../providers/animal_provider.dart';
 
@@ -26,6 +28,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
   String _selectedBreed = 'Unknown';
   bool _isUrgent = false;
   bool _isPosting = false;
+  bool _isAiWriting = false;
 
   Uint8List? _imageBytes;
   String? _imageFileName;
@@ -84,6 +87,41 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+    }
+  }
+
+  Future<void> _generateDescriptionWithAI() async {
+    if (_ageController.text.isEmpty || _nameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter the Name and Age first!')),
+      );
+      return;
+    }
+
+    setState(() => _isAiWriting = true);
+    try {
+      final apiKey = dotenv.env['GEMINI_API_KEY'];
+      if (apiKey == null) throw Exception('API Key missing. Check .env');
+
+      final model = GenerativeModel(model: 'gemini-3.6-flash', apiKey: apiKey);
+      final prompt =
+          'Write a 3 sentence, extremely engaging and creative adoption description for a ${_ageController.text} month old $_selectedBreed $_selectedSpecies named ${_nameController.text}. It needs to make someone instantly want to buy or adopt them! Be highly emotional and use emojis, but do not use hashtags. Be concise.';
+
+      final response = await model.generateContent([Content.text(prompt)]);
+
+      setState(() {
+        _descController.text = (response.text ?? '').trim();
+        _isAiWriting = false;
+      });
+    } catch (e) {
+      setState(() => _isAiWriting = false);
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('AI Error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
     }
   }
 
@@ -362,9 +400,48 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                           ],
                         ),
                         const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4.0),
+                              child: Text(
+                                'Description & Personality',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            TextButton.icon(
+                              icon: _isAiWriting
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.auto_awesome,
+                                      color: Colors.deepPurpleAccent,
+                                    ),
+                              label: const Text(
+                                '🪄 Write with AI',
+                                style: TextStyle(
+                                  color: Colors.deepPurpleAccent,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onPressed: _isAiWriting
+                                  ? null
+                                  : _generateDescriptionWithAI,
+                            ),
+                          ],
+                        ),
                         _buildInputField(
                           controller: _descController,
-                          label: 'Description & Personality',
+                          label: 'Write something heartfelt...',
                           icon: Icons.description,
                           maxLines: 4,
                           validator: (val) =>

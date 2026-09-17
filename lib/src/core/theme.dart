@@ -63,4 +63,67 @@ class AppTheme {
       ),
     );
   }
+
+  static const Color midnightSlate = Color(0xFF0A0F1C);
+  static const Color darkSurface = Color(0xFF131B2F);
+  static const Color neonCyan = Color(0xFF00E5FF);
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      brightness: Brightness.dark,
+      primaryColor: neonCyan,
+      scaffoldBackgroundColor: midnightSlate,
+      colorScheme: const ColorScheme.dark(
+        primary: neonCyan,
+        secondary: neonCyan,
+        surface: darkSurface,
+      ),
+      textTheme: TextTheme(
+        displayLarge: GoogleFonts.nunito(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        displayMedium: GoogleFonts.nunito(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        titleLarge: GoogleFonts.nunito(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: neonCyan,
+        ),
+        bodyLarge: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.normal,
+          color: Colors.white70,
+        ),
+        bodyMedium: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
+          color: Colors.white54,
+        ),
+        labelLarge: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: midnightSlate,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: neonCyan,
+          foregroundColor: midnightSlate,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
 }

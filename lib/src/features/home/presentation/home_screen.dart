@@ -5,6 +5,7 @@ import '../providers/animal_provider.dart';
 import '../widgets/animal_card.dart';
 import '../../../core/supabase_setup.dart'; // To get current user details
 import '../../auth/providers/role_provider.dart';
+import '../../../core/providers/theme_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -113,6 +114,25 @@ class HomeScreen extends ConsumerWidget {
                                   if (role == 'seller' || role == 'admin')
                                     Container(
                                       decoration: BoxDecoration(
+                                        color: Colors.pinkAccent.withOpacity(
+                                          0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      margin: const EdgeInsets.only(right: 12),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.analytics,
+                                          color: Colors.pinkAccent,
+                                        ),
+                                        tooltip: 'Revenue Analytics',
+                                        onPressed: () =>
+                                            context.push('/analytics'),
+                                      ),
+                                    ),
+                                  if (role == 'seller' || role == 'admin')
+                                    Container(
+                                      decoration: BoxDecoration(
                                         color: Colors.green.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -142,6 +162,29 @@ class HomeScreen extends ConsumerWidget {
                               ),
                               tooltip: 'Gemini AI Matchmaker',
                               onPressed: () => context.push('/ai_matchmaker'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Consumer(
+                              builder: (context, ref, child) {
+                                final isDark =
+                                    ref.watch(themeProvider) == ThemeMode.dark;
+                                return IconButton(
+                                  icon: Icon(
+                                    isDark ? Icons.light_mode : Icons.dark_mode,
+                                    color: Colors.amber,
+                                  ),
+                                  tooltip: 'Toggle Theme',
+                                  onPressed: () => ref
+                                      .read(themeProvider.notifier)
+                                      .toggleTheme(),
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(width: 16),
