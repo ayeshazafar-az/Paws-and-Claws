@@ -197,7 +197,10 @@ class DetailsScreen extends ConsumerWidget {
                         side: BorderSide(color: theme.primaryColor, width: 2),
                       ),
                       onPressed: () {
-                        context.push('/chat', extra: animal.sellerId);
+                        context.push(
+                          '/chat',
+                          extra: {'id': animal.sellerId, 'name': animal.name},
+                        );
                       },
                       icon: const Icon(Icons.chat_bubble_outline, size: 18),
                       label: const Text(

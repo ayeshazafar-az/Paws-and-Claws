@@ -36,9 +36,12 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
 
     _messageController.clear();
 
-    // If targetUserId is set, it means a Volunteer is explicitly replying to an Adopter.
-    // If null, it means an Adopter is sending a message to the general Shelter.
-    final receiverId = widget.targetUserId;
+    // If targetUserId is set, chat routes to specific seller.
+    // If empty/null (legacy pets), use dummy UUID string to prevent Postgres RLS string cast crashes
+    final receiverId =
+        (widget.targetUserId != null && widget.targetUserId!.isNotEmpty)
+        ? widget.targetUserId
+        : '00000000-0000-0000-0000-000000000000';
 
     try {
       await SupabaseSetup.client.from('messages').insert({
@@ -77,10 +80,11 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isVolunteerMode = widget.targetUserId != null;
-    final title = isVolunteerMode
-        ? 'Chat: ${widget.targetUserName}'
-        : 'Shelter Support';
+    final isC2C =
+        widget.targetUserId != null && widget.targetUserId!.isNotEmpty;
+    final title = isC2C
+        ? 'Chat: ${widget.targetUserName ?? 'Seller'}'
+        : 'Legacy Animal Support';
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -132,11 +136,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 final allMessages = snapshot.data!;
 
                 // 1-to-1 Routing Logic:
-                // If I am Adopter: show messages where I am sender OR I am receiver.
-                // If I am Volunteer (targetUserId provided): show messages where target is sender OR target is receiver.
-                final filterId = isVolunteerMode
-                    ? widget.targetUserId!
-                    : _currentUserId;
+                final filterId = isC2C ? widget.targetUserId! : _currentUserId;
 
                 final filteredMessages = allMessages.where((m) {
                   return m['sender_id'] == filterId ||
