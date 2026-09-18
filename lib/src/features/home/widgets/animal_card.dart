@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/models/animal.dart';
+import '../../auth/providers/role_provider.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/supabase_setup.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AnimalCard extends StatelessWidget {
+class AnimalCard extends ConsumerWidget {
   final Animal animal;
   final VoidCallback onTap;
 
   const AnimalCard({super.key, required this.animal, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final user = SupabaseSetup.client.auth.currentUser;
+    final role = ref.watch(userRoleProvider);
 
     // Fallback image if none provided
     final imageUrl =
@@ -61,15 +67,32 @@ class AnimalCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Icon(
-                        animal.species.toLowerCase() == 'cat'
-                            ? Icons.pets
-                            : (animal.species.toLowerCase() == 'dog'
-                                  ? Icons.pets
-                                  : Icons.flutter_dash),
-                        size: 16,
-                        color: theme.colorScheme.secondary,
-                      ),
+                      if (role != 'admin' && animal.sellerId != user?.id)
+                        GestureDetector(
+                          onTap: () {
+                            context.push(
+                              '/chat',
+                              extra: {
+                                'id': animal.sellerId,
+                                'name': animal.name,
+                              },
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.secondary.withOpacity(
+                                0.1,
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.chat_bubble_outline,
+                              size: 20,
+                              color: theme.colorScheme.secondary,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 4),
