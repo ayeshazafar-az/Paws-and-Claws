@@ -19,15 +19,42 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
 
   late final Stream<List<Map<String, dynamic>>> _messagesStream;
   String get _currentUserId => SupabaseSetup.client.auth.currentUser?.id ?? '';
+  String _dynamicHeaderName = '';
 
   @override
   void initState() {
     super.initState();
+    _fetchTargetName();
     // Stream ALL messages, we filter client-side to easily handle the OR logic for 1-to-1 routing
     _messagesStream = SupabaseSetup.client
         .from('messages')
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: true);
+  }
+
+  Future<void> _fetchTargetName() async {
+    if (widget.targetUserName != null) {
+      if (mounted) setState(() => _dynamicHeaderName = widget.targetUserName!);
+      return;
+    }
+
+    if (widget.targetUserId == null || widget.targetUserId!.isEmpty) return;
+
+    try {
+      final res = await SupabaseSetup.client
+          .from('profiles')
+          .select('full_name, name, username')
+          .eq('id', widget.targetUserId!)
+          .maybeSingle();
+      if (res != null && mounted) {
+        final fetchedName = res['full_name'] ?? res['name'] ?? res['username'];
+        if (fetchedName != null && fetchedName.toString().isNotEmpty) {
+          setState(() => _dynamicHeaderName = fetchedName.toString());
+        }
+      }
+    } catch (e) {
+      // Profiles table missing or RLS blocked; UI will naturally fall back to Seller #ID mask.
+    }
   }
 
   void _sendMessage() async {
@@ -88,9 +115,10 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               .toUpperCase()
         : '0000';
 
+    // Resolve dynamic identity mapping with robust UUID fallbacks
     final title = isC2C
-        ? (widget.targetUserName != null
-              ? widget.targetUserName!
+        ? (_dynamicHeaderName.isNotEmpty
+              ? _dynamicHeaderName
               : 'Seller #$shortId')
         : 'Chat with Seller';
 
