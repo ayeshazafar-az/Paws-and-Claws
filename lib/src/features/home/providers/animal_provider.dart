@@ -20,7 +20,10 @@ final urgentAnimalsProvider = FutureProvider<List<Animal>>((ref) async {
       .eq('is_urgent', true)
       .eq('adoption_status', 'available');
 
-  return (response as List).map((e) => Animal.fromJson(e)).toList();
+  return (response as List)
+      .map((e) => Animal.fromJson(e))
+      .where((a) => a.sellerId != null && a.sellerId!.isNotEmpty)
+      .toList();
 });
 
 final allAnimalsProvider = FutureProvider<List<Animal>>((ref) async {
@@ -36,5 +39,8 @@ final allAnimalsProvider = FutureProvider<List<Animal>>((ref) async {
   }
 
   final response = await query;
-  return (response as List).map((e) => Animal.fromJson(e)).toList();
+  return (response as List)
+      .map((e) => Animal.fromJson(e))
+      .where((a) => a.sellerId != null && a.sellerId!.isNotEmpty)
+      .toList();
 });
