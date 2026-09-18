@@ -166,12 +166,16 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
             .getPublicUrl(uniquePath);
 
         // 3. Insert into Database
+        final sellerName = user?.userMetadata?['full_name'] ?? 'Seller';
+        final rawDesc =
+            '${_descController.text.trim()} \n\n[SELLER:$sellerName]';
+
         await SupabaseSetup.client.from('animals').insert({
           'name': _nameController.text.trim(),
           'species': _selectedSpecies,
           'breed': _selectedBreed == 'Unknown' ? null : _selectedBreed,
           'age_months': age,
-          'description': _descController.text.trim(),
+          'description': rawDesc,
           'image_url': finalImageUrl,
           'is_urgent': _isUrgent,
           'adoption_status': 'available',

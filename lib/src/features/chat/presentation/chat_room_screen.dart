@@ -64,11 +64,11 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     _messageController.clear();
 
     // If targetUserId is set, chat routes to specific seller.
-    // If empty/null (legacy pets), use dummy UUID string to prevent Postgres RLS string cast crashes
+    // If empty/null (legacy pets), use current user's UUID so Supabase RLS (auth.uid=sender/receiver) validates cleanly
     final receiverId =
         (widget.targetUserId != null && widget.targetUserId!.isNotEmpty)
         ? widget.targetUserId
-        : '00000000-0000-0000-0000-000000000000';
+        : _currentUserId;
 
     try {
       await SupabaseSetup.client.from('messages').insert({

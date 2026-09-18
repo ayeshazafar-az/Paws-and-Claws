@@ -10,6 +10,7 @@ class Animal {
   final String adoptionStatus;
   final int adoptionFee;
   final String? sellerId;
+  final String? sellerName;
   final DateTime createdAt;
 
   Animal({
@@ -24,22 +25,33 @@ class Animal {
     this.adoptionStatus = 'available',
     this.adoptionFee = 150,
     this.sellerId,
+    this.sellerName,
     required this.createdAt,
   });
 
   factory Animal.fromJson(Map<String, dynamic> json) {
+    final rawDesc = json['description'] as String? ?? '';
+    String? sName;
+    String cleanDesc = rawDesc;
+    if (rawDesc.contains('[SELLER:')) {
+      final split = rawDesc.split('[SELLER:');
+      cleanDesc = split[0].trim();
+      sName = split[1].replaceAll(']', '').trim();
+    }
+
     return Animal(
       id: json['id'] as String,
       name: json['name'] as String,
       species: json['species'] as String,
       breed: json['breed'] as String?,
       ageMonths: json['age_months'] as int?,
-      description: json['description'] as String?,
+      description: cleanDesc,
       imageUrl: json['image_url'] as String?,
       isUrgent: json['is_urgent'] as bool? ?? false,
       adoptionStatus: json['adoption_status'] as String? ?? 'available',
       adoptionFee: json['adoption_fee'] as int? ?? 150,
       sellerId: json['seller_id'] as String?,
+      sellerName: sName,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
