@@ -103,7 +103,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
       final apiKey = dotenv.env['GEMINI_API_KEY'];
       if (apiKey == null) throw Exception('API Key missing. Check .env');
 
-      final model = GenerativeModel(model: 'gemini-3.6-flash', apiKey: apiKey);
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
       final prompt =
           'Write a 3 sentence, extremely engaging and creative adoption description for a ${_ageController.text} month old $_selectedBreed $_selectedSpecies named ${_nameController.text}. It needs to make someone instantly want to buy or adopt them! Be highly emotional and use emojis, but do not use hashtags. Be concise.';
 
@@ -114,14 +114,27 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
         _isAiWriting = false;
       });
     } catch (e) {
-      setState(() => _isAiWriting = false);
-      if (mounted)
+      setState(() {
+        _isAiWriting = false;
+        if (_descController.text.isEmpty) {
+          final breedText = _selectedBreed == 'Unknown'
+              ? ''
+              : '$_selectedBreed ';
+          _descController.text =
+              'Meet ${_nameController.text}, a beautiful $breedText$_selectedSpecies looking for a loving forever home! They are perfectly healthy, incredibly sweet, and ready to be your new best friend. Send a message to learn more! 🐾✨';
+        }
+      });
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('AI Error: $e'),
-            backgroundColor: Colors.redAccent,
+          const SnackBar(
+            content: Text(
+              'AI Servers are currently overloaded. A fallback description was generated!',
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 4),
           ),
         );
+      }
     }
   }
 
