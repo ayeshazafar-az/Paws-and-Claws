@@ -82,9 +82,17 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     final theme = Theme.of(context);
     final isC2C =
         widget.targetUserId != null && widget.targetUserId!.isNotEmpty;
+    final shortId = isC2C
+        ? widget.targetUserId!
+              .substring(widget.targetUserId!.length - 4)
+              .toUpperCase()
+        : '0000';
+
     final title = isC2C
-        ? 'Chat: ${widget.targetUserName ?? 'Seller'}'
-        : 'Legacy Animal Support';
+        ? (widget.targetUserName != null
+              ? widget.targetUserName!
+              : 'Seller #$shortId')
+        : 'Chat with Seller';
 
     return Scaffold(
       backgroundColor: Colors.grey[100],

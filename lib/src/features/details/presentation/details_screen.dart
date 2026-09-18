@@ -201,7 +201,7 @@ class DetailsScreen extends ConsumerWidget {
                       onPressed: () {
                         context.push(
                           '/chat',
-                          extra: {'id': animal.sellerId, 'name': animal.name},
+                          extra: {'id': animal.sellerId, 'name': null},
                         );
                       },
                       icon: const Icon(Icons.chat_bubble_outline, size: 18),
