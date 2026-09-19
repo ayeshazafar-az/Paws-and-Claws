@@ -61,6 +61,8 @@ ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 -- Basic Policies (Can be modified later for tighter security)
 -- Public read access for animals
 CREATE POLICY "Public profiles are viewable by everyone." ON public.animals FOR SELECT USING (true);
+CREATE POLICY "Users can universally insert animals." ON public.animals FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can universally update animals." ON public.animals FOR UPDATE USING (true);
 
 -- Users can read their own profile
 CREATE POLICY "Users can view own profile." ON public.users FOR SELECT USING (auth.uid() = id);
