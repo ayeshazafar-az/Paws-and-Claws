@@ -42,11 +42,21 @@ CREATE TABLE public.donations (
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 5. Create Messages Table (C2C Messaging)
+CREATE TABLE public.messages (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  sender_id uuid REFERENCES auth.users(id) NOT NULL,
+  receiver_id uuid REFERENCES auth.users(id) NOT NULL,
+  content text NOT NULL,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.animals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.donations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
 -- Basic Policies (Can be modified later for tighter security)
 -- Public read access for animals
@@ -66,6 +76,11 @@ CREATE POLICY "Users can create applications." ON public.applications FOR INSERT
 CREATE POLICY "Users can read own donations." ON public.donations FOR SELECT USING (auth.uid() = user_id);
 -- Users can insert their own donations
 CREATE POLICY "Users can create donations." ON public.donations FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Universal P2P Messaging Select Policy (Users can see messages they sent or received)
+CREATE POLICY "Users can view active chats" ON public.messages FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
+-- Universal P2P Messaging Insert Policy (Users can send messages to anyone openly)
+CREATE POLICY "Users can openly insert messages" ON public.messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
 
 -- Trigger to automatically create a user record in public.users when a new auth user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
