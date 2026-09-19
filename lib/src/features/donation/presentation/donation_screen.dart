@@ -69,7 +69,6 @@ class _DonationScreenState extends ConsumerState<DonationScreen>
       await SupabaseSetup.client.from('donations').insert({
         'user_id': user?.id,
         'amount': amount,
-        'message': 'Processed securely via mock Stripe integration.',
       });
 
       setState(() {
