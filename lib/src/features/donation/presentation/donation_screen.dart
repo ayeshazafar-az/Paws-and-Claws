@@ -71,6 +71,14 @@ class _DonationScreenState extends ConsumerState<DonationScreen>
         'amount': amount,
       });
 
+      // Eradicate pet from feed on successful checkout
+      if (widget.animal != null) {
+        await SupabaseSetup.client
+            .from('animals')
+            .update({'adoption_status': 'adopted'})
+            .eq('id', widget.animal!.id);
+      }
+
       setState(() {
         _isProcessing = false;
         _isSuccess = true;
@@ -129,7 +137,49 @@ class _DonationScreenState extends ConsumerState<DonationScreen>
                 ),
                 const SizedBox(height: 16),
                 _buildAmountPresets(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
+
+                if (widget.animal != null) ...[
+                  Text(
+                    'Manual Verification: Transfer To',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.blueGrey[900],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.orange[200]!),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Beneficiary: ${widget.animal!.sellerName ?? "Verified Rescue Partner"}',
+                          style: TextStyle(
+                            color: Colors.orange[900],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Bank Target: SafeX C2C Exchange • Acct: ****8894',
+                          style: TextStyle(
+                            color: Colors.orange[800],
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
 
                 _buildModernTextField(
                   _amountController,
