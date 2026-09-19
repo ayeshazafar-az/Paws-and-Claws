@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/supabase_setup.dart';
+import '../../home/providers/animal_provider.dart';
 
 import '../../../core/models/animal.dart';
 
