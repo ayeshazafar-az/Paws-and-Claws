@@ -79,6 +79,11 @@ class _DonationScreenState extends ConsumerState<DonationScreen>
             .update({'adoption_status': 'adopted'})
             .eq('id', widget.animal!.id);
 
+        // Push to local UI blacklist to dynamically eradicate the pet from global feeds regardless of remote DB sync state
+        ref
+            .read(localSoldPetsProvider.notifier)
+            .update((state) => {...state, widget.animal!.id});
+
         // Force the cache list to completely refresh instantly
         ref.invalidate(allAnimalsProvider);
         ref.invalidate(urgentAnimalsProvider);

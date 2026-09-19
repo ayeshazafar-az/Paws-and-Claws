@@ -18,10 +18,7 @@ class AnimalCard extends ConsumerWidget {
     final user = SupabaseSetup.client.auth.currentUser;
     final role = ref.watch(userRoleProvider);
 
-    // Fallback image if none provided
-    final imageUrl =
-        animal.imageUrl ??
-        'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800&auto=format&fit=crop';
+    final imageUrl = animal.imageUrl;
 
     // Convert months to readable string
     final ageStr = animal.ageMonths != null
@@ -42,13 +39,25 @@ class AnimalCard extends ConsumerWidget {
             Expanded(
               child: Hero(
                 tag: 'animal_image_${animal.id}',
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) =>
-                      const Center(child: CircularProgressIndicator()),
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
-                ),
+                child: imageUrl != null && imageUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) =>
+                            const Center(child: CircularProgressIndicator()),
+                        errorWidget: (context, url, error) =>
+                            const Icon(Icons.error),
+                      )
+                    : Container(
+                        color: theme.colorScheme.secondary.withOpacity(0.1),
+                        child: Center(
+                          child: Icon(
+                            Icons.pets,
+                            size: 48,
+                            color: theme.colorScheme.secondary.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
               ),
             ),
             Padding(

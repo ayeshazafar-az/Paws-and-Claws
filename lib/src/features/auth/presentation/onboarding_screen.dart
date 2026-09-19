@@ -17,22 +17,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       "title": "Connect.",
       "description":
           "A frictionless marketplace connecting families directly with ethical breeders and local rescuers.",
-      "image":
-          "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop",
     },
     {
       "title": "Discover.",
       "description":
           "Find your new best friend with active filtering and instant real-time chats with verified sellers.",
-      "image":
-          "https://images.unsplash.com/photo-1541364983171-a8ba01e95cfc?q=80&w=800&auto=format&fit=crop",
     },
     {
       "title": "Adopt.",
       "description":
           "Secure transactional gateways ensure safe transfers. Your next best friend is waiting.",
-      "image":
-          "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?q=80&w=800&auto=format&fit=crop",
     },
   ];
 
@@ -53,20 +47,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    _onboardingData[index]["image"]!,
-                    fit: BoxFit.cover,
-                  ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.black.withOpacity(0.8),
-                          Colors.transparent,
+                          Theme.of(context).primaryColor,
+                          Theme.of(context).primaryColorDark,
                         ],
                         begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        stops: const [0.0, 0.6],
+                        stops: const [0.0, 1.0],
                       ),
                     ),
                   ),
