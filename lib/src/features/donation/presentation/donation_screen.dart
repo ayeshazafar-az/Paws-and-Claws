@@ -77,6 +77,10 @@ class _DonationScreenState extends ConsumerState<DonationScreen>
             .from('animals')
             .update({'adoption_status': 'adopted'})
             .eq('id', widget.animal!.id);
+
+        // Force the cache list to completely refresh instantly
+        ref.invalidate(allAnimalsProvider);
+        ref.invalidate(urgentAnimalsProvider);
       }
 
       setState(() {
